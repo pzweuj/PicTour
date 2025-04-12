@@ -1,0 +1,17 @@
+{
+  "name": "pictour",
+  "version": "1.0.0",
+  "description": "景区地图实时定位工具",
+  "main": "main.js",
+  "scripts": {
+    "dev": "uni -p app",
+    "build": "uni build -p app"
+  },
+  "keywords": [
+    "uni-app",
+    "map",
+    "location"
+  ],
+  "author": "",
+  "license": "ISC"
+}

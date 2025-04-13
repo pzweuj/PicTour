@@ -52,7 +52,7 @@ export default function Home() {
   const [isSettingOrientation, setIsSettingOrientation] = useState(false) // 是否正在设置方向
   const [tempOrientation, setTempOrientation] = useState(0) // 临时方向
   const [settingsOpen, setSettingsOpen] = useState(false) // 是否打开设置面板
-  const [compassDragStart, setCompassDragStart] = useState<{ x: number; y: number; angle: number } | null>(null) // 罗盘拖动开始
+  const compassDragStart = useRef<{ x: number; y: number; angle: number } | null>(null) // 罗盘拖动开始
   const [pinchDistance, setPinchDistance] = useState<number | null>(null) // 双指捏合距离
   const [initialZoom, setInitialZoom] = useState<number>(1) // 初始缩放级别
 
@@ -97,16 +97,6 @@ export default function Home() {
       }
       reader.readAsDataURL(file)
     }
-  }
-
-  // 模拟相机拍摄
-  const handleCameraCapture = () => {
-    // 在实际应用中，这里会调用设备相机API
-    // 为了演示，我们使用一个示例图片
-    setMapImage("/placeholder.svg?height=800&width=1200&text=Camera+Capture")
-    // 重置缩放和位置
-    setZoom(1)
-    setMapOffset({ x: 0, y: 0 })
   }
 
   // 坐标转换：图片坐标 -> 屏幕坐标
@@ -276,11 +266,11 @@ export default function Home() {
     // 计算初始角度
     const initialAngle = calculateAngle(compassCenterX, compassCenterY, e.clientX, e.clientY)
 
-    setCompassDragStart({
+    compassDragStart.current = {
       x: e.clientX,
       y: e.clientY,
       angle: initialAngle - tempOrientation,
-    })
+    };
 
     document.addEventListener("mousemove", handleCompassMouseMove)
     document.addEventListener("mouseup", handleCompassMouseUp)
@@ -297,7 +287,7 @@ export default function Home() {
     const currentAngle = calculateAngle(compassCenterX, compassCenterY, e.clientX, e.clientY)
 
     // 计算旋转角度差
-    let newOrientation = currentAngle - compassDragStart.angle
+    let newOrientation = currentAngle - (compassDragStart.current?.angle || 0)
 
     // 规范化角度到0-360范围
     newOrientation = ((newOrientation % 360) + 360) % 360
@@ -306,7 +296,7 @@ export default function Home() {
   }
 
   const handleCompassMouseUp = () => {
-    setCompassDragStart(null)
+    compassDragStart.current = null
     document.removeEventListener("mousemove", handleCompassMouseMove)
     document.removeEventListener("mouseup", handleCompassMouseUp)
   }
@@ -324,11 +314,11 @@ export default function Home() {
     // 计算初始角度
     const initialAngle = calculateAngle(compassCenterX, compassCenterY, touch.clientX, touch.clientY)
 
-    setCompassDragStart({
+    compassDragStart.current = {
       x: touch.clientX,
       y: touch.clientY,
       angle: initialAngle - tempOrientation,
-    })
+    };
   }
 
   const handleCompassTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
@@ -343,7 +333,7 @@ export default function Home() {
     const currentAngle = calculateAngle(compassCenterX, compassCenterY, touch.clientX, touch.clientY)
 
     // 计算旋转角度差
-    let newOrientation = currentAngle - compassDragStart.angle
+    let newOrientation = currentAngle - (compassDragStart.current?.angle || 0)
 
     // 规范化角度到0-360范围
     newOrientation = ((newOrientation % 360) + 360) % 360
@@ -352,7 +342,7 @@ export default function Home() {
   }
 
   const handleCompassTouchEnd = () => {
-    setCompassDragStart(null)
+    compassDragStart.current = null
   }
 
   // 确认罗盘设置
@@ -393,23 +383,102 @@ export default function Home() {
     }
   }, [isTracking, scale, heading])
 
+  // 检查位置权限状态
+  const [locationPermissionStatus, setLocationPermissionStatus] = useState<string>("未知");
+
+  // 在组件加载时检查位置权限
+  useEffect(() => {
+    checkLocationPermission();
+    
+    // 添加一个延迟的权限检查，确保在某些浏览器中能正确触发
+    const timer = setTimeout(() => {
+      if (locationPermissionStatus === "未知" || locationPermissionStatus === "prompt") {
+        console.log("尝试预热位置权限请求");
+        // 预热位置请求，可能会触发权限提示
+        navigator.geolocation.getCurrentPosition(
+          () => console.log("位置预热成功"),
+          (err) => console.log("位置预热失败", err.code),
+          { timeout: 3000, maximumAge: 0 }
+        );
+      }
+    }, 2000);
+    
+    return () => clearTimeout(timer);
+  }, [locationPermissionStatus]);
+
+  // 检查位置权限状态
+  const checkLocationPermission = async () => {
+    if (!navigator.geolocation) {
+      setLocationPermissionStatus("不支持");
+      return;
+    }
+
+    if (navigator.permissions && navigator.permissions.query) {
+      try {
+        const result = await navigator.permissions.query({ name: 'geolocation' });
+        setLocationPermissionStatus(result.state);
+        
+        // 监听权限变化
+        result.addEventListener('change', () => {
+          setLocationPermissionStatus(result.state);
+        });
+      } catch (error) {
+        console.error("权限查询失败", error);
+        setLocationPermissionStatus("未知");
+      }
+    } else {
+      // 如果不支持permissions API，尝试获取位置来检查权限
+      navigator.geolocation.getCurrentPosition(
+        () => setLocationPermissionStatus("granted"),
+        () => setLocationPermissionStatus("denied"),
+        { timeout: 3000 }
+      );
+    }
+  };
+
   // 请求位置权限
   const requestLocationPermission = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          console.log("位置获取成功", position.coords)
-          setIsTracking(true)
-        },
-        (error) => {
-          console.error("位置获取失败", error)
-          alert("无法获取位置，请确保您已授予位置权限")
-        },
-      )
-    } else {
-      alert("您的设备不支持地理位置功能")
+    if (!navigator.geolocation) {
+      alert("您的设备不支持地理位置功能");
+      return;
     }
-  }
+
+    // 显示加载状态
+    const loadingToast = alert("正在请求位置权限...");
+    
+    // 强制触发权限请求
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        console.log("位置获取成功", position.coords);
+        setIsTracking(true);
+        setLocationPermissionStatus("granted");
+        
+        // 使用实际位置数据更新用户位置
+        // 这里可以添加将GPS坐标转换为地图坐标的逻辑
+        // 暂时保持现有的模拟位置
+      },
+      (error) => {
+        console.error("位置获取失败", error.code, error.message);
+        setLocationPermissionStatus("denied");
+        
+        // 根据错误类型提供不同的提示
+        if (error.code === 1) { // PERMISSION_DENIED
+          alert("位置权限被拒绝，请在浏览器设置中启用位置权限");
+        } else if (error.code === 2) { // POSITION_UNAVAILABLE
+          alert("位置信息不可用，请确保您的设备已开启GPS");
+        } else if (error.code === 3) { // TIMEOUT
+          alert("获取位置超时，请检查您的网络连接");
+        } else {
+          alert("无法获取位置: " + error.message);
+        }
+      },
+      { 
+        enableHighAccuracy: true,  // 请求高精度位置
+        timeout: 10000,            // 10秒超时
+        maximumAge: 0              // 不使用缓存的位置
+      }
+    );
+  };
 
   // 完成位置设置
   const completePositionSetting = () => {
@@ -554,19 +623,15 @@ export default function Home() {
           />
         </div>
 
-        {/* 更明显的拍照和上传按钮 */}
+        {/* 只保留上传按钮，移除拍照按钮 */}
         <div className="flex gap-2">
-          <Button variant="outline" className="flex items-center gap-1 bg-background/90" onClick={handleCameraCapture}>
-            <Camera className="h-4 w-4" />
-            <span className="hidden sm:inline">拍照</span>
-          </Button>
           <Button
             variant="outline"
             className="flex items-center gap-1 bg-background/90"
             onClick={() => fileInputRef.current?.click()}
           >
             <Upload className="h-4 w-4" />
-            <span className="hidden sm:inline">上传</span>
+            <span className="sm:inline">上传地图</span>
             <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
           </Button>
         </div>

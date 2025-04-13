@@ -625,25 +625,28 @@ export default function Home() {
           </div>
         )}
 
-        {/* 方向指示器 - 罗盘覆盖在地图上 */}
+        {/* 方向指示器 - 罗盘覆盖在地图上 - 移到左边并缩小 */}
         <div
-          className="absolute top-20 right-4 z-10 cursor-pointer hover:opacity-90 transition-opacity"
+          className="absolute top-20 left-4 z-10 cursor-pointer hover:opacity-90 transition-opacity"
           onClick={openCompassSetting}
+          style={{ touchAction: 'manipulation' }}
         >
-          <div className="relative w-16 h-16 bg-background/80 backdrop-blur-sm rounded-full flex items-center justify-center">
+          <div className="relative w-12 h-12 bg-background/80 backdrop-blur-sm rounded-full flex items-center justify-center">
             <div className="absolute inset-0 flex items-center justify-center">
-              <Compass className="h-10 w-10 text-primary" />
+              <Compass className="h-8 w-8 text-primary" />
             </div>
 
             {/* 北方指示 */}
             <div
-              className="absolute top-2 left-1/2 -translate-x-1/2 flex flex-col items-center"
+              className="absolute top-1 left-1/2 -translate-x-1/2 flex flex-col items-center"
               style={{ transform: `rotate(${-orientation}deg)` }}
             >
-              <ArrowUp className="h-4 w-4 text-destructive" />
-              <span className="text-xs font-bold">北</span>
+              <ArrowUp className="h-3 w-3 text-destructive" />
+              <span className="text-[10px] font-bold">北</span>
             </div>
           </div>
+          {/* 增加点击区域 */}
+          <div className="absolute inset-0 -m-4"></div>
         </div>
 
         {/* 比例尺 - 移到左下方 */}

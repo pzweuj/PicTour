@@ -264,6 +264,11 @@ export default function Home() {
   const handleZoomIn = () => setZoom(Math.min(zoom + 0.2, 3))
   const handleZoomOut = () => setZoom(Math.max(zoom - 0.2, 0.5))
 
+  // 计算当前比例尺值（考虑缩放）
+  const getCurrentScale = () => {
+    return Math.round(scale / zoom);
+  }
+
   // 计算两点之间的角度
   const calculateAngle = (x1: number, y1: number, x2: number, y2: number) => {
     return Math.atan2(y2 - y1, x2 - x1) * (180 / Math.PI)
@@ -625,9 +630,9 @@ export default function Home() {
           </div>
         )}
 
-        {/* 方向指示器 - 罗盘覆盖在地图上 - 进一步缩小 */}
+        {/* 方向指示器 - 罗盘覆盖在地图上 - 移到右侧并向下移动 */}
         <div
-          className="absolute top-20 left-4 z-10 cursor-pointer hover:opacity-90 transition-opacity"
+          className="absolute top-24 right-4 z-10 cursor-pointer hover:opacity-90 transition-opacity"
           onClick={openCompassSetting}
           style={{ touchAction: 'manipulation' }}
         >
@@ -680,7 +685,7 @@ export default function Home() {
         {/* 比例尺 - 移到左下方 */}
         <div className="absolute bottom-8 left-4 bg-background/80 backdrop-blur-sm px-2 py-1 rounded-md flex items-center gap-1 z-10">
           <div className="w-16 h-1 bg-foreground"></div>
-          <span className="text-xs">{scale}米</span>
+          <span className="text-xs">{getCurrentScale()}米</span>
         </div>
       </div>
 
@@ -838,6 +843,9 @@ export default function Home() {
                   className="w-24"
                 />
                 <span className="text-sm">米/厘米</span>
+              </div>
+              <div className="text-xs text-muted-foreground">
+                当前实际比例尺: {getCurrentScale()} 米/厘米 (随缩放变化)
               </div>
             </div>
 

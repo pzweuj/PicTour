@@ -9,7 +9,6 @@ import { Slider } from "@/components/ui/slider"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent } from "@/components/ui/card"
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
 import {
   Camera,
   Upload,
@@ -21,10 +20,9 @@ import {
   ZoomOut,
   Locate,
   X,
-  RotateCcw,
   Check,
   ChevronDown,
-  ImagePlus,
+  ArrowUp,
 } from "lucide-react"
 
 export default function Home() {
@@ -40,14 +38,20 @@ export default function Home() {
   const [mapOffset, setMapOffset] = useState({ x: 0, y: 0 })
   const [startDragPos, setStartDragPos] = useState({ x: 0, y: 0 })
   const [isSettingPosition, setIsSettingPosition] = useState(false)
-  const [compassDialogOpen, setCompassDialogOpen] = useState(false)
+  const [isSettingOrientation, setIsSettingOrientation] = useState(false)
   const [tempOrientation, setTempOrientation] = useState(0)
   const [settingsOpen, setSettingsOpen] = useState(false)
-  const [mapCenter, setMapCenter] = useState({ x: 0, y: 0 })
+  const [compassDragStart, setCompassDragStart] = useState<{ x: number; y: number; angle: number } | null>(null)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const mapContainerRef = useRef<HTMLDivElement>(null)
   const compassRef = useRef<HTMLDivElement>(null)
+  const compassDialRef = useRef<HTMLDivElement>(null)
+
+  // 初始化tempOrientation
+  useEffect(() => {
+    setTempOrientation(orientation)
+  }, [orientation, isSettingOrientation])
 
   // 处理文件上传
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -126,38 +130,112 @@ export default function Home() {
   const handleZoomIn = () => setZoom(Math.min(zoom + 0.2, 3))
   const handleZoomOut = () => setZoom(Math.max(zoom - 0.2, 0.5))
 
-  // 罗盘旋转
-  const handleCompassMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!compassRef.current) return
+  // 计算两点之间的角度
+  const calculateAngle = (x1: number, y1: number, x2: number, y2: number) => {
+    return Math.atan2(y2 - y1, x2 - x1) * (180 / Math.PI)
+  }
 
-    const compassRect = compassRef.current.getBoundingClientRect()
+  // 罗盘旋转 - 鼠标事件
+  const handleCompassMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!compassDialRef.current) return
+
+    e.preventDefault()
+    const compassRect = compassDialRef.current.getBoundingClientRect()
     const compassCenterX = compassRect.left + compassRect.width / 2
     const compassCenterY = compassRect.top + compassRect.height / 2
 
-    const angle = Math.atan2(e.clientY - compassCenterY, e.clientX - compassCenterX) * (180 / Math.PI) + 90
+    // 计算初始角度
+    const initialAngle = calculateAngle(compassCenterX, compassCenterY, e.clientX, e.clientY)
 
-    setTempOrientation(angle < 0 ? angle + 360 : angle)
+    setCompassDragStart({
+      x: e.clientX,
+      y: e.clientY,
+      angle: initialAngle - tempOrientation,
+    })
 
-    const handleMouseMove = (moveEvent: MouseEvent) => {
-      const newAngle =
-        Math.atan2(moveEvent.clientY - compassCenterY, moveEvent.clientX - compassCenterX) * (180 / Math.PI) + 90
+    document.addEventListener("mousemove", handleCompassMouseMove)
+    document.addEventListener("mouseup", handleCompassMouseUp)
+  }
 
-      setTempOrientation(newAngle < 0 ? newAngle + 360 : newAngle)
-    }
+  const handleCompassMouseMove = (e: MouseEvent) => {
+    if (!compassDialRef.current || !compassDragStart) return
 
-    const handleMouseUp = () => {
-      document.removeEventListener("mousemove", handleMouseMove)
-      document.removeEventListener("mouseup", handleMouseUp)
-    }
+    const compassRect = compassDialRef.current.getBoundingClientRect()
+    const compassCenterX = compassRect.left + compassRect.width / 2
+    const compassCenterY = compassRect.top + compassRect.height / 2
 
-    document.addEventListener("mousemove", handleMouseMove)
-    document.addEventListener("mouseup", handleMouseUp)
+    // 计算当前角度
+    const currentAngle = calculateAngle(compassCenterX, compassCenterY, e.clientX, e.clientY)
+
+    // 计算旋转角度差
+    let newOrientation = currentAngle - compassDragStart.angle
+
+    // 规范化角度到0-360范围
+    newOrientation = ((newOrientation % 360) + 360) % 360
+
+    setTempOrientation(newOrientation)
+  }
+
+  const handleCompassMouseUp = () => {
+    setCompassDragStart(null)
+    document.removeEventListener("mousemove", handleCompassMouseMove)
+    document.removeEventListener("mouseup", handleCompassMouseUp)
+  }
+
+  // 罗盘旋转 - 触摸事件
+  const handleCompassTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (!compassDialRef.current) return
+
+    e.preventDefault()
+    const touch = e.touches[0]
+    const compassRect = compassDialRef.current.getBoundingClientRect()
+    const compassCenterX = compassRect.left + compassRect.width / 2
+    const compassCenterY = compassRect.top + compassRect.height / 2
+
+    // 计算初始角度
+    const initialAngle = calculateAngle(compassCenterX, compassCenterY, touch.clientX, touch.clientY)
+
+    setCompassDragStart({
+      x: touch.clientX,
+      y: touch.clientY,
+      angle: initialAngle - tempOrientation,
+    })
+  }
+
+  const handleCompassTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (!compassDialRef.current || !compassDragStart) return
+
+    const touch = e.touches[0]
+    const compassRect = compassDialRef.current.getBoundingClientRect()
+    const compassCenterX = compassRect.left + compassRect.width / 2
+    const compassCenterY = compassRect.top + compassRect.height / 2
+
+    // 计算当前角度
+    const currentAngle = calculateAngle(compassCenterX, compassCenterY, touch.clientX, touch.clientY)
+
+    // 计算旋转角度差
+    let newOrientation = currentAngle - compassDragStart.angle
+
+    // 规范化角度到0-360范围
+    newOrientation = ((newOrientation % 360) + 360) % 360
+
+    setTempOrientation(newOrientation)
+  }
+
+  const handleCompassTouchEnd = () => {
+    setCompassDragStart(null)
   }
 
   // 确认罗盘设置
   const confirmCompassSetting = () => {
     setOrientation(tempOrientation)
-    setCompassDialogOpen(false)
+    setIsSettingOrientation(false)
+  }
+
+  // 取消罗盘设置
+  const cancelCompassSetting = () => {
+    setTempOrientation(orientation)
+    setIsSettingOrientation(false)
   }
 
   // 模拟位置跟踪
@@ -205,13 +283,13 @@ export default function Home() {
     // 计算当前中心点在地图上的位置
     if (mapContainerRef.current) {
       const rect = mapContainerRef.current.getBoundingClientRect()
-      const centerX = rect.width / 2
-      const centerY = rect.height / 2
 
       // 根据当前偏移和缩放计算实际位置
-      const posX = 50 - (mapOffset.x / (rect.width * zoom)) * 100
-      const posY = 50 - (mapOffset.y / (rect.height * zoom)) * 100
+      // 修正计算方法，确保正确保存位置
+      const posX = 50 - (mapOffset.x / ((rect.width * zoom) / 2)) * 50
+      const posY = 50 - (mapOffset.y / ((rect.height * zoom) / 2)) * 50
 
+      console.log("设置位置:", { posX, posY, mapOffset, zoom })
       setUserPosition({ x: posX, y: posY })
     }
 
@@ -229,6 +307,13 @@ export default function Home() {
     if (angle >= 202.5 && angle < 247.5) return "西南"
     if (angle >= 247.5 && angle < 292.5) return "西"
     return "西北"
+  }
+
+  // 打开罗盘设置
+  const openCompassSetting = () => {
+    setTempOrientation(orientation)
+    setIsSettingOrientation(true)
+    setSettingsOpen(false)
   }
 
   return (
@@ -289,20 +374,23 @@ export default function Home() {
         )}
 
         {/* 方向指示器 - 罗盘覆盖在地图上 */}
-        <div className="absolute top-20 right-4 z-10">
+        <div
+          className="absolute top-20 right-4 z-10 cursor-pointer hover:opacity-90 transition-opacity"
+          onClick={openCompassSetting}
+        >
           <div className="relative w-16 h-16 bg-background/80 backdrop-blur-sm rounded-full flex items-center justify-center">
-            <Compass className="h-10 w-10 text-primary" />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Compass className="h-10 w-10 text-primary" />
+            </div>
+
+            {/* 北方指示 */}
             <div
-              className="absolute w-1 h-8 bg-destructive"
-              style={{
-                top: "4px",
-                left: "50%",
-                marginLeft: "-0.5px",
-                transformOrigin: "bottom center",
-                transform: `rotate(${orientation}deg)`,
-              }}
-            />
-            <div className="absolute top-1 left-1/2 -translate-x-1/2 text-xs font-bold">北</div>
+              className="absolute top-2 left-1/2 -translate-x-1/2 flex flex-col items-center"
+              style={{ transform: `rotate(${-orientation}deg)` }}
+            >
+              <ArrowUp className="h-4 w-4 text-destructive" />
+              <span className="text-xs font-bold">北</span>
+            </div>
           </div>
         </div>
 
@@ -387,45 +475,9 @@ export default function Home() {
                   <Compass className="h-5 w-5 text-primary" />
                   <h4 className="font-medium">地图方向</h4>
                 </div>
-                <Dialog open={compassDialogOpen} onOpenChange={setCompassDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" size="sm">
-                      设置方向
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-md">
-                    <div className="flex flex-col items-center gap-4">
-                      <h3 className="text-lg font-medium">旋转罗盘设置方向</h3>
-                      <div
-                        ref={compassRef}
-                        className="relative w-64 h-64 border-4 border-primary rounded-full flex items-center justify-center cursor-pointer"
-                        onMouseDown={handleCompassMouseDown}
-                      >
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <Compass className="h-32 w-32 text-primary" />
-                        </div>
-                        <div
-                          className="absolute top-0 left-1/2 -translate-x-1/2 w-1 h-8 bg-destructive"
-                          style={{ transform: `rotate(${tempOrientation}deg)`, transformOrigin: "bottom center" }}
-                        />
-                        {/* 方向标记 */}
-                        <div className="absolute top-4 left-1/2 -translate-x-1/2 font-bold">北</div>
-                        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 font-bold">南</div>
-                        <div className="absolute left-4 top-1/2 -translate-y-1/2 font-bold">西</div>
-                        <div className="absolute right-4 top-1/2 -translate-y-1/2 font-bold">东</div>
-                      </div>
-                      <div className="flex gap-4 w-full">
-                        <Button variant="outline" className="flex-1" onClick={() => setTempOrientation(0)}>
-                          <RotateCcw className="h-4 w-4 mr-2" />
-                          重置
-                        </Button>
-                        <Button className="flex-1" onClick={confirmCompassSetting}>
-                          确认
-                        </Button>
-                      </div>
-                    </div>
-                  </DialogContent>
-                </Dialog>
+                <Button variant="outline" size="sm" onClick={openCompassSetting}>
+                  设置方向
+                </Button>
               </div>
               <div className="text-sm text-muted-foreground">
                 当前方向: {Math.round(orientation)}° ({getOrientationName(orientation)})
@@ -492,6 +544,95 @@ export default function Home() {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* 方向设置全屏模式 */}
+      {isSettingOrientation && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="flex flex-col items-center gap-6 p-4">
+            <h2 className="text-xl font-bold text-white">旋转罗盘设置方向</h2>
+
+            {/* 大型罗盘 */}
+            <div
+              ref={compassDialRef}
+              className="relative w-72 h-72 touch-none"
+              onMouseDown={handleCompassMouseDown}
+              onTouchStart={handleCompassTouchStart}
+              onTouchMove={handleCompassTouchMove}
+              onTouchEnd={handleCompassTouchEnd}
+            >
+              {/* 罗盘外圈 - 可旋转部分 */}
+              <div
+                className="absolute inset-0 rounded-full border-8 border-primary/70 bg-background/30 backdrop-blur-sm"
+                style={{ transform: `rotate(${tempOrientation}deg)` }}
+              >
+                {/* 罗盘刻度 - 主要方向 */}
+                {[0, 90, 180, 270].map((angle) => (
+                  <div
+                    key={angle}
+                    className="absolute top-0 left-1/2 -translate-x-1/2 flex flex-col items-center"
+                    style={{ transform: `rotate(${angle}deg)` }}
+                  >
+                    <div className="w-2 h-12 bg-primary"></div>
+                    <div className="absolute top-14 text-lg font-bold text-primary">
+                      {angle === 0 ? "北" : angle === 90 ? "东" : angle === 180 ? "南" : "西"}
+                    </div>
+                  </div>
+                ))}
+
+                {/* 罗盘刻度 - 次要方向 */}
+                {[45, 135, 225, 315].map((angle) => (
+                  <div
+                    key={angle}
+                    className="absolute top-0 left-1/2 -translate-x-1/2"
+                    style={{ transform: `rotate(${angle}deg)` }}
+                  >
+                    <div className="w-1 h-8 bg-primary/70"></div>
+                    <div
+                      className="absolute top-10 text-sm font-medium text-primary/70 whitespace-nowrap"
+                      style={{ transform: `rotate(-${angle}deg)` }}
+                    >
+                      {angle === 45 ? "东北" : angle === 135 ? "东南" : angle === 225 ? "西南" : "西北"}
+                    </div>
+                  </div>
+                ))}
+
+                {/* 旋转提示 */}
+                <div
+                  className="absolute bottom-4 left-1/2 -translate-x-1/2 text-primary font-bold text-lg"
+                  style={{ transform: `rotate(-${tempOrientation}deg)` }}
+                >
+                  旋转外圈
+                </div>
+              </div>
+
+              {/* 罗盘中心 - 固定部分 */}
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 rounded-full bg-background/90 backdrop-blur-md flex items-center justify-center z-10">
+                <Compass className="h-20 w-20 text-primary" />
+
+                {/* 固定的北方指示 */}
+                <div className="absolute top-2 left-1/2 -translate-x-1/2 flex flex-col items-center">
+                  <ArrowUp className="h-6 w-6 text-destructive" />
+                </div>
+              </div>
+            </div>
+
+            {/* 当前角度显示 */}
+            <div className="text-white text-lg font-medium">
+              {Math.round(tempOrientation)}° ({getOrientationName(tempOrientation)})
+            </div>
+
+            {/* 控制按钮 */}
+            <div className="flex gap-4 w-full max-w-xs">
+              <Button variant="outline" className="flex-1" onClick={cancelCompassSetting}>
+                取消
+              </Button>
+              <Button variant="default" className="flex-1" onClick={confirmCompassSetting}>
+                确认
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
     </main>
   )

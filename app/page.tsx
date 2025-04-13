@@ -471,6 +471,9 @@ export default function Home() {
         // 使用实际位置数据更新用户位置
         // 这里可以添加将GPS坐标转换为地图坐标的逻辑
         // 暂时保持现有的模拟位置
+        
+        // 将地图中心移动到用户位置
+        centerMapOnUser();
       },
       (error) => {
         console.error("位置获取失败", error.code, error.message);
@@ -494,6 +497,29 @@ export default function Home() {
       }
     );
   };
+
+  // 添加一个新函数，用于将地图中心移动到用户位置
+  const centerMapOnUser = () => {
+    if (!mapContainerRef.current) return;
+    
+    // 获取容器尺寸
+    const containerRect = mapContainerRef.current.getBoundingClientRect();
+    const containerCenterX = containerRect.width / 2;
+    const containerCenterY = containerRect.height / 2;
+    
+    // 计算用户位置相对于图片中心的偏移（考虑缩放）
+    const deltaX = (userPosition.x - imageSize.width / 2) * zoom;
+    const deltaY = (userPosition.y - imageSize.height / 2) * zoom;
+    
+    // 计算需要的地图偏移量，使用户位置显示在屏幕中心
+    setMapOffset({
+      x: -deltaX,
+      y: -deltaY
+    });
+  };
+
+  // 修改定位按钮的点击处理
+  // 在右下角控制按钮部分找到定位按钮，修改其onClick处理函数
 
   // 完成位置设置
   const completePositionSetting = () => {
@@ -699,7 +725,17 @@ export default function Home() {
               <Button
                 variant={isTracking ? "default" : "ghost"}
                 size="icon"
-                onClick={() => (isTracking ? setIsTracking(false) : requestLocationPermission())}
+                onClick={() => {
+                  if (isTracking) {
+                    setIsTracking(false);
+                  } else {
+                    requestLocationPermission();
+                  }
+                  // 如果已经在跟踪状态，点击按钮也会将地图中心移动到用户位置
+                  if (isTracking) {
+                    centerMapOnUser();
+                  }
+                }}
                 className={`active:shadow-lg active:scale-95 transition-all duration-75 shadow-none ${isTracking ? "hover:bg-primary/90" : "hover:bg-background/50"}`}
               >
                 <Locate className="h-5 w-5" />

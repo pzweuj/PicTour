@@ -21,7 +21,7 @@ import {
   Check,
   ChevronDown,
   ArrowUp,
-  FileText, // Replace FileOpen with FileText
+  Image as ImageIcon,
 } from "lucide-react"
 
 // 图片坐标类型
@@ -629,7 +629,7 @@ export default function Home() {
             className="flex items-center gap-1 bg-background/90 active:shadow-lg active:scale-95 transition-all duration-75 shadow-none"
             onClick={() => fileInputRef.current?.click()}
           >
-            <FileText className="h-4 w-4" /> {/* Use FileText instead of FileOpen */}
+            <ImageIcon className="h-4 w-4" /> {/* Use FileText instead of FileOpen */}
             <span className="sm:inline">打开地图</span>
             <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
           </Button>

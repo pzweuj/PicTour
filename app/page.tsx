@@ -637,7 +637,7 @@ export default function Home() {
               <div className="w-full h-full bg-gradient-to-br from-slate-100 to-slate-200 opacity-90"></div>
             </div>
             
-            {/* 罗盘刻度 */}
+            {/* 罗盘刻度 - 这部分应该随着orientation旋转 */}
             <div className="absolute inset-0 rounded-full"
                  style={{ transform: `rotate(${-orientation}deg)` }}>
               {/* 主要方向刻度 */}
@@ -666,27 +666,15 @@ export default function Home() {
               ))}
             </div>
             
-            {/* 罗盘中心和指针 */}
+            {/* 罗盘中心和指针 - 移除指针，只保留中心部分 */}
             <div className="relative w-8 h-8 rounded-full bg-white/90 shadow-inner flex items-center justify-center z-10 border border-slate-300">
               <div className="absolute w-7 h-7 rounded-full bg-gradient-to-br from-slate-50 to-slate-200 flex items-center justify-center">
                 <Compass className="h-5 w-5 text-primary" />
               </div>
               
-              {/* 指针 */}
-              <div className="absolute w-full h-full">
-                {/* 北指针 */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1 h-1/2 flex flex-col items-center">
-                  <div className="w-0 h-0 border-l-[4px] border-r-[4px] border-b-[8px] border-l-transparent border-r-transparent border-b-red-500"></div>
-                  <div className="w-0.5 h-[calc(100%-8px)] bg-gradient-to-b from-red-500 to-red-600"></div>
-                </div>
-                
-                {/* 南指针 */}
-                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1/2 flex flex-col items-center rotate-180">
-                  <div className="w-0 h-0 border-l-[4px] border-r-[4px] border-b-[8px] border-l-transparent border-r-transparent border-b-slate-400"></div>
-                  <div className="w-0.5 h-[calc(100%-8px)] bg-gradient-to-b from-slate-400 to-slate-500"></div>
-                </div>
-              </div>
+              {/* 移除了指针部分 */}
             </div>
+
           </div>
           {/* 增加点击区域 */}
           <div className="absolute inset-0 -m-4"></div>
@@ -969,13 +957,12 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* 罗盘中心 - 固定部分 */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 rounded-full bg-background/90 backdrop-blur-md flex items-center justify-center z-10">
-                <Compass className="h-20 w-20 text-primary" />
-
-                {/* 固定的北方指示 */}
-                <div className="absolute top-2 left-1/2 -translate-x-1/2 flex flex-col items-center">
-                  <ArrowUp className="h-6 w-6 text-destructive" />
+              {/* 罗盘中心 - 固定部分 - 移除指针 */}
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-40 h-40 rounded-full bg-white/90 shadow-lg flex items-center justify-center z-10 border-2 border-slate-300">
+                <div className="relative w-36 h-36 rounded-full bg-gradient-to-br from-slate-50 to-slate-200 flex items-center justify-center">
+                  <Compass className="h-20 w-20 text-primary opacity-50" />
+                  
+                  {/* 移除了指针部分 */}
                 </div>
               </div>
             </div>

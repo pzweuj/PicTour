@@ -10,8 +10,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent } from "@/components/ui/card"
 import {
-  Camera,
-  Upload,
   Settings,
   Compass,
   MapPin,
@@ -23,6 +21,7 @@ import {
   Check,
   ChevronDown,
   ArrowUp,
+  FileText, // Replace FileOpen with FileText
 } from "lucide-react"
 
 // 图片坐标类型
@@ -623,15 +622,15 @@ export default function Home() {
           />
         </div>
 
-        {/* 只保留上传按钮，移除拍照按钮 */}
+        {/* 修改为打开地图按钮 */}
         <div className="flex gap-2">
           <Button
             variant="outline"
             className="flex items-center gap-1 bg-background/90 active:shadow-lg active:scale-95 transition-all duration-75 shadow-none"
             onClick={() => fileInputRef.current?.click()}
           >
-            <Upload className="h-4 w-4" />
-            <span className="sm:inline">上传地图</span>
+            <FileText className="h-4 w-4" /> {/* Use FileText instead of FileOpen */}
+            <span className="sm:inline">打开地图</span>
             <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
           </Button>
         </div>

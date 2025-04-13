@@ -534,7 +534,7 @@ export default function Home() {
 
       {/* 顶部标题栏 */}
       <div className="fixed top-0 left-0 right-0 bg-background/80 backdrop-blur-sm p-4 flex justify-between items-center z-20">
-        <div className="h-8 w-auto relative">
+        <div className="h-8 w-auto relative -mt-4">
           <Image 
             src="/logo_cha.png" 
             alt="PicTour Logo" 

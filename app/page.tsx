@@ -881,8 +881,8 @@ export default function Home() {
 
       {/* 方向设置全屏模式 */}
       {isSettingOrientation && (
-        <div className="fixed inset-0 bg-background/90 backdrop-blur-md z-50 flex items-center justify-center">
-          <div className="flex flex-col items-center gap-6 p-4">
+        <div className="fixed inset-0 bg-transparent z-50 flex items-center justify-center">
+          <div className="flex flex-col items-center gap-6 p-4 bg-background/80 backdrop-blur-md rounded-xl shadow-xl border border-primary/20">
             <h2 className="text-xl font-bold">旋转罗盘设置方向</h2>
 
             {/* 大型罗盘 */}
@@ -949,13 +949,7 @@ export default function Home() {
                   })}
                 </div>
 
-                {/* 旋转提示 */}
-                <div
-                  className="absolute bottom-4 left-1/2 -translate-x-1/2 text-primary font-bold text-lg"
-                  style={{ transform: `rotate(-${tempOrientation}deg)` }}
-                >
-                  旋转外圈
-                </div>
+                {/* 删除了旋转外圈字样 */}
               </div>
 
               {/* 罗盘中心 - 固定部分 */}

@@ -627,7 +627,7 @@ export default function Home() {
         <div className="flex gap-2">
           <Button
             variant="outline"
-            className="flex items-center gap-1 bg-background/90"
+            className="flex items-center gap-1 bg-background/90 active:shadow-lg active:scale-95 transition-all duration-75 shadow-none"
             onClick={() => fileInputRef.current?.click()}
           >
             <Upload className="h-4 w-4" />
@@ -642,10 +642,20 @@ export default function Home() {
         {/* 位置设置模式下的控制按钮 */}
         {isSettingPosition ? (
           <div className="bg-background/80 backdrop-blur-sm p-2 rounded-full flex gap-2">
-            <Button variant="destructive" size="icon" onClick={() => setIsSettingPosition(false)}>
+            <Button 
+              variant="destructive" 
+              size="icon" 
+              onClick={() => setIsSettingPosition(false)}
+              className="active:shadow-lg active:scale-95 transition-all duration-75 shadow-none"
+            >
               <X className="h-5 w-5" />
             </Button>
-            <Button variant="default" size="icon" onClick={completePositionSetting}>
+            <Button 
+              variant="default" 
+              size="icon" 
+              onClick={completePositionSetting}
+              className="active:shadow-lg active:scale-95 transition-all duration-75 shadow-none"
+            >
               <Check className="h-5 w-5" />
             </Button>
           </div>
@@ -653,16 +663,27 @@ export default function Home() {
           <div className="flex flex-col gap-2 items-end">
             {/* 控制按钮组 */}
             <div className="bg-background/80 backdrop-blur-sm p-2 rounded-full flex flex-col gap-2 shadow-lg">
-              <Button variant="ghost" size="icon" onClick={handleZoomIn}>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={handleZoomIn}
+                className="active:shadow-lg active:scale-95 transition-all duration-75 shadow-none hover:bg-background/50"
+              >
                 <ZoomIn className="h-5 w-5" />
               </Button>
-              <Button variant="ghost" size="icon" onClick={handleZoomOut}>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={handleZoomOut}
+                className="active:shadow-lg active:scale-95 transition-all duration-75 shadow-none hover:bg-background/50"
+              >
                 <ZoomOut className="h-5 w-5" />
               </Button>
               <Button
                 variant={isTracking ? "default" : "ghost"}
                 size="icon"
                 onClick={() => (isTracking ? setIsTracking(false) : requestLocationPermission())}
+                className={`active:shadow-lg active:scale-95 transition-all duration-75 shadow-none ${isTracking ? "hover:bg-primary/90" : "hover:bg-background/50"}`}
               >
                 <Locate className="h-5 w-5" />
               </Button>
@@ -670,6 +691,7 @@ export default function Home() {
                 variant={settingsOpen ? "default" : "ghost"}
                 size="icon"
                 onClick={() => setSettingsOpen(!settingsOpen)}
+                className={`active:shadow-lg active:scale-95 transition-all duration-75 shadow-none ${settingsOpen ? "hover:bg-primary/90" : "hover:bg-background/50"}`}
               >
                 <Settings className="h-5 w-5" />
               </Button>
@@ -689,7 +711,12 @@ export default function Home() {
                   <Compass className="h-5 w-5 text-primary" />
                   <h4 className="font-medium">地图方向</h4>
                 </div>
-                <Button variant="outline" size="sm" onClick={openCompassSetting}>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={openCompassSetting}
+                  className="active:shadow-lg active:scale-95 transition-all duration-75 shadow-none"
+                >
                   设置方向
                 </Button>
               </div>
@@ -738,7 +765,7 @@ export default function Home() {
               </div>
               <Button
                 variant="outline"
-                className="w-full"
+                className="w-full active:shadow-lg active:scale-95 transition-all duration-75 shadow-none"
                 onClick={() => {
                   setIsSettingPosition(true)
                   setSettingsOpen(false)
@@ -751,7 +778,12 @@ export default function Home() {
 
             {/* 关闭按钮 */}
             <div className="pt-2 flex justify-center">
-              <Button variant="ghost" size="sm" className="w-full" onClick={() => setSettingsOpen(false)}>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="w-full active:shadow-lg active:scale-95 transition-all duration-75 shadow-none" 
+                onClick={() => setSettingsOpen(false)}
+              >
                 <ChevronDown className="h-4 w-4 mr-2" />
                 关闭设置
               </Button>
@@ -838,10 +870,18 @@ export default function Home() {
 
             {/* 控制按钮 */}
             <div className="flex gap-4 w-full max-w-xs">
-              <Button variant="outline" className="flex-1" onClick={cancelCompassSetting}>
+              <Button 
+                variant="outline" 
+                className="flex-1 active:shadow-lg transition-shadow duration-100 shadow-none" 
+                onClick={cancelCompassSetting}
+              >
                 取消
               </Button>
-              <Button variant="default" className="flex-1" onClick={confirmCompassSetting}>
+              <Button 
+                variant="default" 
+                className="flex-1 active:shadow-lg transition-shadow duration-100 shadow-none" 
+                onClick={confirmCompassSetting}
+              >
                 确认
               </Button>
             </div>

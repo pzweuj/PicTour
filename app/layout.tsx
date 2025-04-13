@@ -7,10 +7,9 @@ import { ThemeProvider } from "@/components/theme-provider"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "PicTour - 景区实时定位导航",
-  description: "拍摄景区地图，设定比例尺、方位和当前位置，然后进行实时定位",
-  viewport: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no",
-    generator: 'v0.dev'
+  title: "PicTour - 拍照定位导航",
+  description: "拍摄地图，设定比例尺、方位和当前位置，然后进行实时定位",
+  viewport: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
 }
 
 export default function RootLayout({

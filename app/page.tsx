@@ -625,13 +625,13 @@ export default function Home() {
           </div>
         )}
 
-        {/* 方向指示器 - 罗盘覆盖在地图上 - 移到左边并缩小 */}
+        {/* 方向指示器 - 罗盘覆盖在地图上 - 进一步缩小 */}
         <div
           className="absolute top-20 left-4 z-10 cursor-pointer hover:opacity-90 transition-opacity"
           onClick={openCompassSetting}
           style={{ touchAction: 'manipulation' }}
         >
-          <div className="relative w-14 h-14 bg-background/80 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg border border-primary/30">
+          <div className="relative w-10 h-10 bg-background/80 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg border border-primary/30">
             {/* 罗盘背景 */}
             <div className="absolute inset-0 rounded-full overflow-hidden">
               <div className="w-full h-full bg-gradient-to-br from-slate-100 to-slate-200 opacity-90"></div>
@@ -639,7 +639,7 @@ export default function Home() {
             
             {/* 罗盘刻度 - 这部分应该随着orientation旋转 */}
             <div className="absolute inset-0 rounded-full"
-                 style={{ transform: `rotate(${-orientation}deg)` }}>
+                 style={{ transform: `rotate(${orientation}deg)` }}>
               {/* 罗盘刻度 - 主要方向 */}
               {[0, 90, 180, 270].map((angle) => (
                 <div
@@ -647,8 +647,8 @@ export default function Home() {
                   className="absolute top-0 left-1/2 -translate-x-1/2 h-full"
                   style={{ transform: `rotate(${angle}deg)` }}
                 >
-                  <div className="absolute top-0 w-0.5 h-1.5 bg-primary left-1/2 -translate-x-1/2"></div>
-                  <div className={`absolute top-1 text-[8px] font-bold ${angle === 0 ? "text-red-500" : "text-primary"} left-1/2 -translate-x-1/2`}>
+                  <div className={`absolute top-0 w-0.5 h-1.5 ${angle === 0 ? "bg-red-500" : "bg-primary"} left-1/2 -translate-x-1/2`}></div>
+                  <div className={`absolute top-1 text-[6px] font-bold ${angle === 0 ? "text-red-500" : "text-primary"} left-1/2 -translate-x-1/2`}>
                     {angle === 0 ? "N" : angle === 90 ? "E" : angle === 180 ? "S" : "W"}
                   </div>
                 </div>
@@ -666,15 +666,12 @@ export default function Home() {
               ))}
             </div>
             
-            {/* 罗盘中心和指针 - 移除指针，只保留中心部分 */}
-            <div className="relative w-8 h-8 rounded-full bg-white/90 shadow-inner flex items-center justify-center z-10 border border-slate-300">
-              <div className="absolute w-7 h-7 rounded-full bg-gradient-to-br from-slate-50 to-slate-200 flex items-center justify-center">
-                <Compass className="h-5 w-5 text-primary" />
+            {/* 罗盘中心 - 缩小 */}
+            <div className="relative w-6 h-6 rounded-full bg-white/90 shadow-inner flex items-center justify-center z-10 border border-slate-300">
+              <div className="absolute w-5 h-5 rounded-full bg-gradient-to-br from-slate-50 to-slate-200 flex items-center justify-center">
+                <Compass className="h-3 w-3 text-primary" />
               </div>
-              
-              {/* 移除了指针部分 */}
             </div>
-
           </div>
           {/* 增加点击区域 */}
           <div className="absolute inset-0 -m-4"></div>
@@ -894,28 +891,28 @@ export default function Home() {
               onTouchMove={handleCompassTouchMove}
               onTouchEnd={handleCompassTouchEnd}
             >
-              {/* 罗盘外圈 - 可旋转部分 */}
+              {/* 罗盘外圈 - 可旋转部分 - 修正旋转方向 */}
               <div
                 className="absolute inset-0 rounded-full border-4 border-primary/30 bg-gradient-to-br from-slate-100 to-slate-200 shadow-lg"
                 style={{ transform: `rotate(${tempOrientation}deg)` }}
               >
                 {/* 罗盘刻度 */}
                 <div className="absolute inset-0 rounded-full">
-                  {/* 主要方向刻度 */}
+                  {/* 主要方向刻度 - 只保留东南西北 */}
                   {[0, 90, 180, 270].map((angle) => (
                     <div
                       key={angle}
                       className="absolute top-0 left-1/2 -translate-x-1/2 h-full"
                       style={{ transform: `rotate(${angle}deg)` }}
                     >
-                      <div className="absolute top-0 w-1.5 h-12 bg-primary left-1/2 -translate-x-1/2"></div>
+                      <div className={`absolute top-0 w-1.5 h-12 ${angle === 0 ? "bg-red-500" : "bg-primary"} left-1/2 -translate-x-1/2`}></div>
                       <div className={`absolute top-14 text-lg font-bold ${angle === 0 ? "text-red-500" : "text-primary"} left-1/2 -translate-x-1/2`}>
-                        {angle === 0 ? "北" : angle === 90 ? "东" : angle === 180 ? "南" : "西"}
+                        {angle === 0 ? "北(N)" : angle === 90 ? "东" : angle === 180 ? "南" : "西"}
                       </div>
                     </div>
                   ))}
                   
-                  {/* 次要方向刻度 */}
+                  {/* 次要方向刻度 - 移除文字标签 */}
                   {[45, 135, 225, 315].map((angle) => (
                     <div
                       key={angle}
@@ -923,10 +920,6 @@ export default function Home() {
                       style={{ transform: `rotate(${angle}deg)` }}
                     >
                       <div className="absolute top-0 w-1 h-8 bg-primary/70 left-1/2 -translate-x-1/2"></div>
-                      <div className="absolute top-10 text-sm font-medium text-primary/70 whitespace-nowrap left-1/2 -translate-x-1/2"
-                           style={{ transform: `rotate(-${angle}deg)` }}>
-                        {angle === 45 ? "东北" : angle === 135 ? "东南" : angle === 225 ? "西南" : "西北"}
-                      </div>
                     </div>
                   ))}
                   

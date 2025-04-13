@@ -185,6 +185,9 @@ export default function Home() {
 
   // 处理地图触摸事件
   const handleMapTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    // 阻止默认行为，防止浏览器缩放
+    e.preventDefault();
+    
     if (e.touches.length === 1) {
       // 单指触摸 - 拖动
       setIsDraggingMap(true)
@@ -200,6 +203,9 @@ export default function Home() {
   }
 
   const handleMapTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    // 阻止默认行为，防止浏览器缩放
+    e.preventDefault();
+    
     if (e.touches.length === 1 && isDraggingMap) {
       // 单指移动 - 拖动地图
       const deltaX = e.touches[0].clientX - startDragPos.x
@@ -223,6 +229,9 @@ export default function Home() {
   }
 
   const handleMapTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
+    // 阻止默认行为
+    e.preventDefault();
+    
     if (e.touches.length < 2) {
       setPinchDistance(null)
     }
@@ -449,7 +458,7 @@ export default function Home() {
       {/* 地图全屏背景 */}
       <div
         ref={mapContainerRef}
-        className="fixed inset-0 w-full h-full bg-muted overflow-hidden"
+        className="fixed inset-0 w-full h-full bg-muted overflow-hidden touch-none"
         onMouseDown={handleMapMouseDown}
         onMouseMove={handleMapMouseMove}
         onMouseUp={handleMapMouseUp}

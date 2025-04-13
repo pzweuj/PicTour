@@ -153,23 +153,33 @@ export default function Home() {
     setIsDraggingMap(true)
     setStartDragPos({ x: e.clientX, y: e.clientY })
   }
-
+  const requestRef = useRef<number | null>(null);
   const handleMapMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!isDraggingMap) return
 
-    const deltaX = e.clientX - startDragPos.x
-    const deltaY = e.clientY - startDragPos.y
+    // 使用 requestAnimationFrame 来优化性能
+    if (!requestRef.current) {
+      requestRef.current = requestAnimationFrame(() => {
+        const deltaX = e.clientX - startDragPos.x
+        const deltaY = e.clientY - startDragPos.y
 
-    setMapOffset({
-      x: mapOffset.x + deltaX,
-      y: mapOffset.y + deltaY,
-    })
+        setMapOffset({
+          x: mapOffset.x + deltaX,
+          y: mapOffset.y + deltaY,
+        })
 
-    setStartDragPos({ x: e.clientX, y: e.clientY })
+        setStartDragPos({ x: e.clientX, y: e.clientY })
+        requestRef.current = null
+      });
+    }
   }
 
   const handleMapMouseUp = () => {
     setIsDraggingMap(false)
+    if (requestRef.current) {
+      cancelAnimationFrame(requestRef.current);
+      requestRef.current = null;
+    }
   }
 
   // 处理地图触摸事件
@@ -195,25 +205,31 @@ export default function Home() {
     // 阻止默认行为，防止浏览器缩放
     e.preventDefault();
     
-    if (e.touches.length === 1 && isDraggingMap) {
-      // 单指移动 - 拖动地图
-      const deltaX = e.touches[0].clientX - startDragPos.x
-      const deltaY = e.touches[0].clientY - startDragPos.y
+    // 使用 requestAnimationFrame 来优化性能
+    if (!requestRef.current) {
+      requestRef.current = requestAnimationFrame(() => {
+        if (e.touches.length === 1 && isDraggingMap) {
+          // 单指移动 - 拖动地图
+          const deltaX = e.touches[0].clientX - startDragPos.x
+          const deltaY = e.touches[0].clientY - startDragPos.y
 
-      setMapOffset({
-        x: mapOffset.x + deltaX,
-        y: mapOffset.y + deltaY,
-      })
+          setMapOffset({
+            x: mapOffset.x + deltaX,
+            y: mapOffset.y + deltaY,
+          })
 
-      setStartDragPos({ x: e.touches[0].clientX, y: e.touches[0].clientY })
-    } else if (e.touches.length === 2 && pinchDistance !== null) {
-      // 双指移动 - 缩放地图
-      const currentDistance = getDistanceBetweenTouches(e)
-      const scaleFactor = currentDistance / pinchDistance
+          setStartDragPos({ x: e.touches[0].clientX, y: e.touches[0].clientY })
+        } else if (e.touches.length === 2 && pinchDistance !== null) {
+          // 双指移动 - 缩放地图
+          const currentDistance = getDistanceBetweenTouches(e)
+          const scaleFactor = currentDistance / pinchDistance
 
-      // 计算新的缩放级别
-      const newZoom = Math.min(Math.max(initialZoom * scaleFactor, 0.5), 3)
-      setZoom(newZoom)
+          // 计算新的缩放级别
+          const newZoom = Math.min(Math.max(initialZoom * scaleFactor, 0.5), 3)
+          setZoom(newZoom)
+        }
+        requestRef.current = null
+      });
     }
   }
 
@@ -541,6 +557,8 @@ export default function Home() {
           className="absolute w-full h-full transition-transform duration-300 flex items-center justify-center"
           style={{
             transform: `scale(${zoom}) translate(${mapOffset.x / zoom}px, ${mapOffset.y / zoom}px)`,
+            willChange: 'transform', // 提示浏览器优化变换
+            transition: isDraggingMap ? 'none' : 'transform 300ms', // 只在非拖动状态下应用过渡效果
           }}
         >
           <Image src={mapImage || "/placeholder.svg"} alt="Map" fill className="object-contain" priority />

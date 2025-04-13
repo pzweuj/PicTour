@@ -464,7 +464,7 @@ export default function Home() {
     }
 
     // 显示加载状态
-    const loadingToast = alert("正在请求位置权限...");
+    // const loadingToast = alert("正在请求位置权限...");
     
     // 强制触发权限请求
     navigator.geolocation.getCurrentPosition(
@@ -623,10 +623,15 @@ export default function Home() {
           </div>
         )}
 
-        {/* 位置设置模式下的中心图钉 - 也适当缩小 */}
+        {/* 位置设置模式下的中心图钉 - 改为红色点 */}
+        {/* 位置设置模式下的中心图钉 - 改为小红点 */}
         {isSettingPosition && (
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none">
-            <MapPin className="h-10 w-10 text-destructive" strokeWidth={3} />
+            {/* 红色点 */}
+            <div className="w-4 h-4 rounded-full bg-red-500 shadow-md border-2 border-white relative">
+              {/* 脉冲动画效果 - 修正为相对于红点定位 */}
+              <div className="absolute inset-0 w-full h-full rounded-full border border-red-400 animate-ping"></div>
+            </div>
           </div>
         )}
 

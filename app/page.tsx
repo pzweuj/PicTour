@@ -640,7 +640,7 @@ export default function Home() {
             {/* 罗盘刻度 - 这部分应该随着orientation旋转 */}
             <div className="absolute inset-0 rounded-full"
                  style={{ transform: `rotate(${-orientation}deg)` }}>
-              {/* 主要方向刻度 */}
+              {/* 罗盘刻度 - 主要方向 */}
               {[0, 90, 180, 270].map((angle) => (
                 <div
                   key={angle}
@@ -648,7 +648,7 @@ export default function Home() {
                   style={{ transform: `rotate(${angle}deg)` }}
                 >
                   <div className="absolute top-0 w-0.5 h-1.5 bg-primary left-1/2 -translate-x-1/2"></div>
-                  <div className="absolute top-1 text-[8px] font-bold text-primary left-1/2 -translate-x-1/2">
+                  <div className={`absolute top-1 text-[8px] font-bold ${angle === 0 ? "text-red-500" : "text-primary"} left-1/2 -translate-x-1/2`}>
                     {angle === 0 ? "N" : angle === 90 ? "E" : angle === 180 ? "S" : "W"}
                   </div>
                 </div>
@@ -881,9 +881,9 @@ export default function Home() {
 
       {/* 方向设置全屏模式 */}
       {isSettingOrientation && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center">
+        <div className="fixed inset-0 bg-background/90 backdrop-blur-md z-50 flex items-center justify-center">
           <div className="flex flex-col items-center gap-6 p-4">
-            <h2 className="text-xl font-bold text-white">旋转罗盘设置方向</h2>
+            <h2 className="text-xl font-bold">旋转罗盘设置方向</h2>
 
             {/* 大型罗盘 */}
             <div
@@ -896,57 +896,58 @@ export default function Home() {
             >
               {/* 罗盘外圈 - 可旋转部分 */}
               <div
-                className="absolute inset-0 rounded-full border-4 border-primary/70 bg-gradient-to-br from-slate-100 to-slate-200 shadow-lg"
+                className="absolute inset-0 rounded-full border-4 border-primary/30 bg-gradient-to-br from-slate-100 to-slate-200 shadow-lg"
                 style={{ transform: `rotate(${tempOrientation}deg)` }}
               >
-                {/* 罗盘刻度 - 主要方向 */}
-                {[0, 90, 180, 270].map((angle) => (
-                  <div
-                    key={angle}
-                    className="absolute top-0 left-1/2 -translate-x-1/2 flex flex-col items-center"
-                    style={{ transform: `rotate(${angle}deg)` }}
-                  >
-                    <div className="w-1.5 h-12 bg-primary"></div>
-                    <div className="absolute top-14 text-lg font-bold text-primary">
-                      {angle === 0 ? "北" : angle === 90 ? "东" : angle === 180 ? "南" : "西"}
-                    </div>
-                  </div>
-                ))}
-
-                {/* 罗盘刻度 - 次要方向 */}
-                {[45, 135, 225, 315].map((angle) => (
-                  <div
-                    key={angle}
-                    className="absolute top-0 left-1/2 -translate-x-1/2"
-                    style={{ transform: `rotate(${angle}deg)` }}
-                  >
-                    <div className="w-1 h-8 bg-primary/70"></div>
+                {/* 罗盘刻度 */}
+                <div className="absolute inset-0 rounded-full">
+                  {/* 主要方向刻度 */}
+                  {[0, 90, 180, 270].map((angle) => (
                     <div
-                      className="absolute top-10 text-sm font-medium text-primary/70 whitespace-nowrap"
-                      style={{ transform: `rotate(-${angle}deg)` }}
+                      key={angle}
+                      className="absolute top-0 left-1/2 -translate-x-1/2 h-full"
+                      style={{ transform: `rotate(${angle}deg)` }}
                     >
-                      {angle === 45 ? "东北" : angle === 135 ? "东南" : angle === 225 ? "西南" : "西北"}
-                    </div>
-                  </div>
-                ))}
-                
-                {/* 细分刻度 */}
-                {Array.from({ length: 36 }).map((_, i) => {
-                  const angle = i * 10;
-                  // 跳过已有主要和次要刻度的位置
-                  if (angle % 45 !== 0) {
-                    return (
-                      <div
-                        key={`tick-${angle}`}
-                        className="absolute top-0 left-1/2 -translate-x-1/2"
-                        style={{ transform: `rotate(${angle}deg)` }}
-                      >
-                        <div className="w-0.5 h-4 bg-primary/40"></div>
+                      <div className="absolute top-0 w-1.5 h-12 bg-primary left-1/2 -translate-x-1/2"></div>
+                      <div className={`absolute top-14 text-lg font-bold ${angle === 0 ? "text-red-500" : "text-primary"} left-1/2 -translate-x-1/2`}>
+                        {angle === 0 ? "北" : angle === 90 ? "东" : angle === 180 ? "南" : "西"}
                       </div>
-                    );
-                  }
-                  return null;
-                })}
+                    </div>
+                  ))}
+                  
+                  {/* 次要方向刻度 */}
+                  {[45, 135, 225, 315].map((angle) => (
+                    <div
+                      key={angle}
+                      className="absolute top-0 left-1/2 -translate-x-1/2 h-full"
+                      style={{ transform: `rotate(${angle}deg)` }}
+                    >
+                      <div className="absolute top-0 w-1 h-8 bg-primary/70 left-1/2 -translate-x-1/2"></div>
+                      <div className="absolute top-10 text-sm font-medium text-primary/70 whitespace-nowrap left-1/2 -translate-x-1/2"
+                           style={{ transform: `rotate(-${angle}deg)` }}>
+                        {angle === 45 ? "东北" : angle === 135 ? "东南" : angle === 225 ? "西南" : "西北"}
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {/* 细分刻度 */}
+                  {Array.from({ length: 36 }).map((_, i) => {
+                    const angle = i * 10;
+                    // 跳过已有主要和次要刻度的位置
+                    if (angle % 45 !== 0) {
+                      return (
+                        <div
+                          key={`tick-${angle}`}
+                          className="absolute top-0 left-1/2 -translate-x-1/2 h-full"
+                          style={{ transform: `rotate(${angle}deg)` }}
+                        >
+                          <div className="absolute top-0 w-0.5 h-4 bg-primary/40 left-1/2 -translate-x-1/2"></div>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })}
+                </div>
 
                 {/* 旋转提示 */}
                 <div
@@ -957,18 +958,16 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* 罗盘中心 - 固定部分 - 移除指针 */}
+              {/* 罗盘中心 - 固定部分 */}
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-40 h-40 rounded-full bg-white/90 shadow-lg flex items-center justify-center z-10 border-2 border-slate-300">
-                <div className="relative w-36 h-36 rounded-full bg-gradient-to-br from-slate-50 to-slate-200 flex items-center justify-center">
+                <div className="absolute w-36 h-36 rounded-full bg-gradient-to-br from-slate-50 to-slate-200 flex items-center justify-center">
                   <Compass className="h-20 w-20 text-primary opacity-50" />
-                  
-                  {/* 移除了指针部分 */}
                 </div>
               </div>
             </div>
 
             {/* 当前角度显示 */}
-            <div className="text-white text-lg font-medium">
+            <div className="text-lg font-medium">
               {Math.round(tempOrientation)}° ({getOrientationName(tempOrientation)})
             </div>
 

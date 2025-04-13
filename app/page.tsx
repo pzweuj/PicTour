@@ -561,24 +561,24 @@ export default function Home() {
               {/* 方向指示器 */}
               {isTracking && (
                 <div
-                  className="absolute -top-6 w-0 h-0 border-l-8 border-r-8 border-b-[16px] border-l-transparent border-r-transparent border-b-blue-500 left-1/2 -ml-2 transition-transform"
+                  className="absolute -top-5 w-0 h-0 border-l-6 border-r-6 border-b-[12px] border-l-transparent border-r-transparent border-b-blue-500 left-1/2 -ml-1.5 transition-transform"
                   style={{ transform: `rotate(${heading}deg)` }}
                 />
               )}
 
-              {/* 用户位置点 */}
-              <div className="w-6 h-6 bg-blue-500 rounded-full relative border-2 border-white shadow-lg flex items-center justify-center">
+              {/* 用户位置点 - 缩小尺寸 */}
+              <div className="w-4 h-4 bg-blue-500 rounded-full relative border-2 border-white shadow-lg flex items-center justify-center">
                 <div className="absolute inset-0 bg-blue-500 rounded-full animate-ping opacity-75" />
-                <div className="w-4 h-4 bg-blue-600 rounded-full z-10" />
+                <div className="w-2 h-2 bg-blue-600 rounded-full z-10" />
               </div>
             </div>
           </div>
         )}
 
-        {/* 位置设置模式下的中心图钉 */}
+        {/* 位置设置模式下的中心图钉 - 也适当缩小 */}
         {isSettingPosition && (
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none">
-            <MapPin className="h-12 w-12 text-destructive" strokeWidth={3} />
+            <MapPin className="h-10 w-10 text-destructive" strokeWidth={3} />
           </div>
         )}
 

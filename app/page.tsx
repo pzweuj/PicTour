@@ -534,7 +534,16 @@ export default function Home() {
 
       {/* 顶部标题栏 */}
       <div className="fixed top-0 left-0 right-0 bg-background/80 backdrop-blur-sm p-4 flex justify-between items-center z-20">
-        <h1 className="text-xl font-bold">PicTour</h1>
+        <div className="h-8 w-auto relative">
+          <Image 
+            src="/logo_cha.png" 
+            alt="PicTour Logo" 
+            width={120} 
+            height={32} 
+            className="object-contain" 
+            priority 
+          />
+        </div>
 
         {/* 更明显的拍照和上传按钮 */}
         <div className="flex gap-2">

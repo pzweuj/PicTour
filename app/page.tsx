@@ -73,7 +73,7 @@ export default function Home() {
 
   // 加载图片时获取图片尺寸
   useEffect(() => {
-    const img = new Image()
+    const img = new window.Image()
     img.onload = () => {
       setImageSize({ width: img.width, height: img.height })
       // 初始化用户位置在图片中心

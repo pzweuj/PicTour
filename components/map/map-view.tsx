@@ -94,7 +94,7 @@ export const MapView: React.FC<MapViewProps> = ({
       setPinchDistance(null)
     } else if (e.touches.length === 2) {
       // 双指触摸 - 缩放
-      const dist = getDistanceBetweenTouches(e.touches[0], e.touches[1])
+      const dist = getDistanceBetweenTouches(e.touches[0] as Touch, e.touches[1] as Touch)
       setPinchDistance(dist)
       setInitialZoom(zoom)
       setIsDraggingMap(false)
@@ -121,7 +121,7 @@ export const MapView: React.FC<MapViewProps> = ({
           setStartDragPos({ x: e.touches[0].clientX, y: e.touches[0].clientY })
         } else if (e.touches.length === 2 && pinchDistance !== null) {
           // 双指移动 - 缩放地图
-          const currentDistance = getDistanceBetweenTouches(e.touches[0], e.touches[1])
+          const currentDistance = getDistanceBetweenTouches(e.touches[0] as Touch, e.touches[1] as Touch)
           const scaleFactor = currentDistance / pinchDistance
 
           // 计算新的缩放级别

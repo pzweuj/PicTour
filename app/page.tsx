@@ -10,7 +10,6 @@ import { SettingsPanel } from "@/components/settings/settings-panel"
 import { Toolbar } from "@/components/toolbar/toolbar"
 import { LocationTracker } from "@/components/location/location-tracker"
 import { Calibration } from "@/components/location/calibration"
-import { GuideButton } from "@/components/guide/guide-button"
 import { GuideModal } from "@/components/guide/guide-modal"
 import type { MapCoordinate, ImageSize, MapOffset } from "@/lib/types"
 import { toast } from "@/components/ui/use-toast"
@@ -347,12 +346,15 @@ export default function Home() {
       {/* 小型罗盘 */}
       <MiniCompass orientation={orientation} onClick={openCompassSetting} />
 
-      {/* 顶部工具栏 */}
-      <Toolbar onOpenMap={openMapFileSelect} fileInputRef={fileInputRef as React.RefObject<HTMLInputElement>} />
+      {/* 顶部工具栏 - 添加 onGuideClick 属性 */}
+      <Toolbar 
+        onOpenMap={openMapFileSelect} 
+        fileInputRef={fileInputRef as React.RefObject<HTMLInputElement>}
+        onGuideClick={() => setIsGuideOpen(true)}
+      />
       <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
 
-      {/* 使用指南按钮 */}
-      <GuideButton onClick={() => setIsGuideOpen(true)} />
+      {/* 移除独立的 GuideButton 组件 */}
       <GuideModal isOpen={isGuideOpen} onClose={() => setIsGuideOpen(false)} />
 
       {/* 控制面板 */}

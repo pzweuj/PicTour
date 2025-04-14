@@ -16,6 +16,7 @@ interface MapViewProps {
   heading: number
   userPosition: MapCoordinate
   imageSize: ImageSize
+  scale: number  // 添加scale属性
   onMapOffsetChange: (offset: MapOffset) => void
   onZoomChange: (zoom: number) => void
   onUserPositionSet: (position: MapCoordinate) => void
@@ -30,6 +31,7 @@ export const MapView: React.FC<MapViewProps> = ({
   heading,
   userPosition,
   imageSize,
+  scale,  // 添加scale参数
   onMapOffsetChange,
   onZoomChange,
   onUserPositionSet,
@@ -229,10 +231,10 @@ export const MapView: React.FC<MapViewProps> = ({
       {/* 位置设置模式下的中心图钉 */}
       <PositionMarker isVisible={isSettingPosition} />
 
-      {/* 比例尺 - 左下方 */}
+      // 比例尺 - 左下方
       <div className="absolute bottom-8 left-4 bg-background/80 backdrop-blur-sm px-2 py-1 rounded-md flex items-center gap-1 z-10">
         <div className="w-16 h-1 bg-foreground"></div>
-        <span className="text-xs">{Math.round(100 / zoom)}米</span>
+        <span className="text-xs">{Math.round(scale / zoom)}米</span>
       </div>
     </div>
   )

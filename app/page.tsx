@@ -324,6 +324,7 @@ export default function Home() {
         heading={heading}
         userPosition={userPosition}
         imageSize={imageSize}
+        scale={scale}  // 传递scale参数
         onMapOffsetChange={setMapOffset}
         onZoomChange={setZoom}
         onUserPositionSet={(position) => {
@@ -393,8 +394,8 @@ export default function Home() {
         currentScale={getCurrentScale()}
         onOpenCompassSetting={openCompassSetting}
         onSetPosition={openPositionSetting}
-        onScaleChange={(value) => setScale(value[0])}
-        onScaleInputChange={(value) => setScale(value)}
+        onScaleChange={(value) => setScale(value[0])}  // 确保这里正确更新比例尺
+        onScaleInputChange={(value) => setScale(value)}  // 确保这里正确更新比例尺
         onStartCalibration={startCalibration}
         onClose={() => setSettingsOpen(false)}
       />

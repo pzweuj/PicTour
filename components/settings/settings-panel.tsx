@@ -1,0 +1,136 @@
+"use client"
+
+import type React from "react"
+import { Card, CardContent } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Slider } from "@/components/ui/slider"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Compass, MapPin, Ruler, ChevronDown, Navigation } from "lucide-react"
+import { getOrientationName } from "@/lib/map-utils"
+
+interface SettingsPanelProps {
+  isOpen: boolean
+  orientation: number
+  scale: number
+  currentScale: number
+  onOpenCompassSetting: () => void
+  onSetPosition: () => void
+  onScaleChange: (value: number[]) => void
+  onScaleInputChange: (value: number) => void
+  onStartCalibration: () => void
+  onClose: () => void
+}
+
+export const SettingsPanel: React.FC<SettingsPanelProps> = ({
+  isOpen,
+  orientation,
+  scale,
+  currentScale,
+  onOpenCompassSetting,
+  onSetPosition,
+  onScaleChange,
+  onScaleInputChange,
+  onStartCalibration,
+  onClose,
+}) => {
+  if (!isOpen) return null
+
+  return (
+    <Card className="fixed bottom-20 right-4 w-[90%] max-w-xs z-30 bg-background/95 backdrop-blur-md shadow-lg">
+      <CardContent className="p-4 space-y-4">
+        {/* 方向设置 */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Compass className="h-5 w-5 text-primary" />
+              <h4 className="font-medium">地图方向</h4>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onOpenCompassSetting}
+              className="active:shadow-lg active:scale-95 transition-all duration-75 shadow-none"
+            >
+              设置方向
+            </Button>
+          </div>
+          <div className="text-sm text-muted-foreground">
+            当前方向: {Math.round(orientation)}° ({getOrientationName(orientation)})
+          </div>
+        </div>
+
+        {/* 比例尺设置 */}
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <Ruler className="h-5 w-5 text-primary" />
+            <h4 className="font-medium">比例尺</h4>
+          </div>
+          <div className="space-y-2">
+            <div className="flex justify-between">
+              <Label htmlFor="scale">比例尺 (米/厘米)</Label>
+              <span className="text-sm font-medium">{scale} 米</span>
+            </div>
+            <Slider id="scale" min={10} max={500} step={10} value={[scale]} onValueChange={onScaleChange} />
+          </div>
+          <div className="flex gap-2 items-center">
+            <Input
+              type="number"
+              value={scale}
+              onChange={(e) => onScaleInputChange(Number(e.target.value))}
+              min={1}
+              className="w-24"
+            />
+            <span className="text-sm">米/厘米</span>
+          </div>
+          <div className="text-xs text-muted-foreground">当前实际比例尺: {currentScale} 米/厘米 (随缩放变化)</div>
+        </div>
+
+        {/* 位置设置 */}
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <MapPin className="h-5 w-5 text-primary" />
+            <h4 className="font-medium">当前位置</h4>
+          </div>
+          <Button
+            variant="outline"
+            className="w-full active:shadow-lg active:scale-95 transition-all duration-75 shadow-none"
+            onClick={onSetPosition}
+          >
+            设置当前位置
+          </Button>
+          <p className="text-sm text-muted-foreground">点击按钮后，拖动地图使图钉指向您的当前位置</p>
+        </div>
+
+        {/* 两点校准 */}
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <Navigation className="h-5 w-5 text-primary" />
+            <h4 className="font-medium">两点校准</h4>
+          </div>
+          <Button
+            variant="outline"
+            className="w-full active:shadow-lg active:scale-95 transition-all duration-75 shadow-none"
+            onClick={onStartCalibration}
+          >
+            开始两点校准
+          </Button>
+          <p className="text-sm text-muted-foreground">通过实际行走自动计算地图方向和比例尺</p>
+        </div>
+
+        {/* 关闭按钮 */}
+        <div className="pt-2 flex justify-center">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full active:shadow-lg active:scale-95 transition-all duration-75 shadow-none"
+            onClick={onClose}
+          >
+            <ChevronDown className="h-4 w-4 mr-2" />
+            关闭设置
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}

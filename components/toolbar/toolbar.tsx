@@ -8,7 +8,7 @@ import { ImageIcon, HelpCircle } from "lucide-react"
 interface ToolbarProps {
   onOpenMap: () => void
   fileInputRef: React.RefObject<HTMLInputElement>
-  onGuideClick?: () => void  // 添加指南按钮点击事件
+  onGuideClick?: () => void // 添加指南按钮点击事件
 }
 
 export const Toolbar: React.FC<ToolbarProps> = ({ onOpenMap, fileInputRef, onGuideClick }) => {
@@ -32,7 +32,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ onOpenMap, fileInputRef, onGui
             <HelpCircle className="h-5 w-5 text-primary" />
           </Button>
         )}
-        
+
         {/* 打开地图按钮 */}
         <Button
           variant="outline"

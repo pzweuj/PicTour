@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Compass, MapPin, Ruler, ChevronDown, Navigation } from "lucide-react"
+import { Compass, MapPin, Ruler, ChevronDown } from "lucide-react"
 import { getOrientationName } from "@/lib/map-utils"
 
 interface SettingsPanelProps {
@@ -18,7 +18,6 @@ interface SettingsPanelProps {
   onSetPosition: () => void
   onScaleChange: (value: number[]) => void
   onScaleInputChange: (value: number) => void
-  onStartCalibration: () => void
   onClose: () => void
 }
 
@@ -31,7 +30,6 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   onSetPosition,
   onScaleChange,
   onScaleInputChange,
-  onStartCalibration,
   onClose,
 }) => {
   if (!isOpen) return null
@@ -100,22 +98,6 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             设置当前位置
           </Button>
           <p className="text-sm text-muted-foreground">点击按钮后，拖动地图使图钉指向您的当前位置</p>
-        </div>
-
-        {/* 两点校准 */}
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <Navigation className="h-5 w-5 text-primary" />
-            <h4 className="font-medium">两点校准</h4>
-          </div>
-          <Button
-            variant="outline"
-            className="w-full active:shadow-lg active:scale-95 transition-all duration-75 shadow-none"
-            onClick={onStartCalibration}
-          >
-            开始两点校准
-          </Button>
-          <p className="text-sm text-muted-foreground">通过实际行走自动计算地图方向和比例尺</p>
         </div>
 
         {/* 关闭按钮 */}

@@ -30,13 +30,18 @@ export const LocationTracker: React.FC<LocationTrackerProps> = ({
   const [currentGPS, setCurrentGPS] = useState<GPSCoordinate | null>(null)
   // 存储位置监听器ID
   const watchIdRef = useRef<number | null>(null)
+  // 添加一个标志，表示是否已初始化参考点
+  const [isReferenceInitialized, setIsReferenceInitialized] = useState(false)
+  // 添加一个标志，表示是否已经请求过位置权限
+  const hasRequestedPermission = useRef(false)
 
   // 初始化参考点
   useEffect(() => {
-    if (isTracking && !referencePoint) {
+    if (isTracking && !isReferenceInitialized && !hasRequestedPermission.current) {
+      hasRequestedPermission.current = true
       initializeReferencePoint()
     }
-  }, [isTracking, referencePoint])
+  }, [isTracking, isReferenceInitialized])
 
   // 当跟踪状态改变时，开始或停止位置监听
   useEffect(() => {
@@ -77,6 +82,7 @@ export const LocationTracker: React.FC<LocationTrackerProps> = ({
       })
 
       setCurrentGPS(gpsCoord)
+      setIsReferenceInitialized(true) // 标记参考点已初始化
 
       console.log("参考点已初始化:", {
         mapCoord: userPosition,
@@ -85,7 +91,6 @@ export const LocationTracker: React.FC<LocationTrackerProps> = ({
     } catch (error) {
       console.error("初始化参考点失败:", error)
       onError("无法获取您的位置，请确保已授予位置权限。")
-      stopTracking()
     }
   }
 
@@ -109,7 +114,6 @@ export const LocationTracker: React.FC<LocationTrackerProps> = ({
         (error) => {
           console.error("位置跟踪错误:", error)
           onError(`位置跟踪错误: ${getGeolocationErrorMessage(error)}`)
-          stopTracking()
         },
         {
           enableHighAccuracy: true,
@@ -155,18 +159,11 @@ export const LocationTracker: React.FC<LocationTrackerProps> = ({
     }
   }
 
-  // 重置参考点
-  const resetReferencePoint = () => {
-    setReferencePoint(null)
-    if (isTracking) {
-      initializeReferencePoint()
-    }
-  }
-
   // 当用户位置、方向或比例尺发生变化时，重置参考点
   useEffect(() => {
-    if (isTracking && referencePoint) {
-      resetReferencePoint()
+    if (isTracking && isReferenceInitialized) {
+      // 重置参考点初始化状态，以便在下次跟踪时重新初始化
+      setIsReferenceInitialized(false)
     }
   }, [userPosition, orientation, scale])
 

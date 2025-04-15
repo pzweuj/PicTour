@@ -6,7 +6,6 @@ import { ZoomIn, ZoomOut, Locate, Settings, X, Check } from "lucide-react"
 
 interface ControlPanelProps {
   isSettingPosition: boolean
-  isTracking: boolean
   settingsOpen: boolean
   onZoomIn: () => void
   onZoomOut: () => void
@@ -18,7 +17,6 @@ interface ControlPanelProps {
 
 export const ControlPanel: React.FC<ControlPanelProps> = ({
   isSettingPosition,
-  isTracking,
   settingsOpen,
   onZoomIn,
   onZoomOut,
@@ -29,7 +27,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
 }) => {
   if (isSettingPosition) {
     return (
-      <div className="fixed bottom-4 right-4 z-20">
+      <div className="fixed bottom-4 right-4 z-50">
         <div className="bg-background/80 backdrop-blur-sm p-2 rounded-full flex gap-2">
           <Button
             variant="destructive"
@@ -47,6 +45,10 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
           >
             <Check className="h-5 w-5" />
           </Button>
+        </div>
+        {/* 添加提示文本 */}
+        <div className="mt-2 bg-background/80 backdrop-blur-sm p-2 rounded-lg text-center text-sm">
+          将地图移动到您当前的位置，然后点击确认
         </div>
       </div>
     )
@@ -74,10 +76,11 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
             <ZoomOut className="h-5 w-5" />
           </Button>
           <Button
-            variant={isTracking ? "default" : "ghost"}
+            variant="ghost"
             size="icon"
             onClick={onLocate}
-            className={`active:shadow-lg active:scale-95 transition-all duration-75 shadow-none ${isTracking ? "hover:bg-primary/90" : "hover:bg-background/50"}`}
+            className="active:shadow-lg active:scale-95 transition-all duration-75 shadow-none hover:bg-background/50"
+            title="定位到当前位置"
           >
             <Locate className="h-5 w-5" />
           </Button>

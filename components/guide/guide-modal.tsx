@@ -10,7 +10,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { ImageIcon, Compass, MapPin } from "lucide-react"
+import { ImageIcon, Compass, MapPin, Ruler } from "lucide-react"
 
 interface GuideModalProps {
   isOpen: boolean
@@ -59,11 +59,27 @@ export const GuideModal: React.FC<GuideModalProps> = ({ isOpen, onClose }) => {
             </p>
           </div>
 
-          {/* 第三步：设置当前位置 */}
+          {/* 第三步：设定比例尺 */}
           <div className="space-y-2">
             <div className="flex items-center gap-3">
               <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 shrink-0">
                 <span className="font-semibold text-primary">3</span>
+              </div>
+              <h3 className="font-medium flex items-center gap-2">
+                <Ruler className="h-4 w-4 text-primary" />
+                设定比例尺
+              </h3>
+            </div>
+            <p className="text-sm text-muted-foreground ml-10">
+              点击右下角的设置按钮，调整比例尺数值使其与地图实际比例相符。
+            </p>
+          </div>
+
+          {/* 第四步：设置当前位置 */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 shrink-0">
+                <span className="font-semibold text-primary">4</span>
               </div>
               <h3 className="font-medium flex items-center gap-2">
                 <MapPin className="h-4 w-4 text-primary" />

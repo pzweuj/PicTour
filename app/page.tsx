@@ -9,11 +9,10 @@ import { ControlPanel } from "@/components/controls/control-panel"
 import { SettingsPanel } from "@/components/settings/settings-panel"
 import { Toolbar } from "@/components/toolbar/toolbar"
 import { LocationTracker } from "@/components/location/location-tracker"
-import { Calibration } from "@/components/location/calibration"
-import { GuideModal } from "@/components/guide/guide-modal"
 import type { MapCoordinate, ImageSize, MapOffset } from "@/lib/types"
 import { toast } from "@/components/ui/use-toast"
 import { Toaster } from "@/components/ui/toaster"
+import { GuideModal } from "@/components/guide/guide-modal"
 
 export default function Home() {
   // 状态管理
@@ -21,22 +20,17 @@ export default function Home() {
   const [orientation, setOrientation] = useState(0) // 角度
   const [scale, setScale] = useState(100) // 比例尺：米/厘米
   const [zoom, setZoom] = useState(1) // 缩放级别
-  const [isTracking, setIsTracking] = useState(false) // 是否跟踪位置
   const [heading, setHeading] = useState(0) // 用户朝向
   const [mapOffset, setMapOffset] = useState<MapOffset>({ x: 0, y: 0 }) // 地图偏移量
   const [isSettingPosition, setIsSettingPosition] = useState(false) // 是否正在设置位置
   const [isSettingOrientation, setIsSettingOrientation] = useState(false) // 是否正在设置方向
-  const [isCalibrating, setIsCalibrating] = useState(false) // 是否正在进行两点校准
   const [tempOrientation, setTempOrientation] = useState(0) // 临时方向
   const [settingsOpen, setSettingsOpen] = useState(false) // 是否打开设置面板
   const [locationPermissionStatus, setLocationPermissionStatus] = useState<string>("未知") // 位置权限状态
   const [locationError, setLocationError] = useState<string | null>(null) // 位置错误信息
-  const [pendingMapPointCallback, setPendingMapPointCallback] = useState<((point: MapCoordinate) => void) | null>(null) // 等待设置地图点的回调
-  const [isGuideOpen, setIsGuideOpen] = useState(false) // 是否打开指引弹窗
-
-  // 图片尺寸和用户位置
   const [imageSize, setImageSize] = useState<ImageSize>({ width: 1200, height: 800 }) // 图片实际尺寸
   const [userPosition, setUserPosition] = useState<MapCoordinate>({ x: 600, y: 400 }) // 用户在图片上的位置（像素）
+  const [isGuideOpen, setIsGuideOpen] = useState(false) // 是否打开指引
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const mapContainerRef = useRef<HTMLDivElement>(null)
@@ -102,7 +96,7 @@ export default function Home() {
     setIsSettingOrientation(false)
   }
 
-  // 在组件加载时检查位置权限
+  // 在组件加载时检查位置权限并自动启动位置跟踪
   useEffect(() => {
     checkLocationPermission()
 
@@ -112,10 +106,17 @@ export default function Home() {
         console.log("尝试预热位置权限请求")
         // 预热位置请求，可能会触发权限提示
         navigator.geolocation.getCurrentPosition(
-          () => console.log("位置预热成功"),
+          () => {
+            console.log("位置预热成功")
+            // 位置权限获取成功后自动开始跟踪
+            startLocationTracking()
+          },
           (err) => console.log("位置预热失败", err.code),
           { timeout: 3000, maximumAge: 0 },
         )
+      } else if (locationPermissionStatus === "granted") {
+        // 如果已经有权限，自动开始跟踪
+        startLocationTracking()
       }
     }, 2000)
 
@@ -137,6 +138,10 @@ export default function Home() {
         // 监听权限变化
         result.addEventListener("change", () => {
           setLocationPermissionStatus(result.state)
+          // 如果权限变为授予，自动开始跟踪
+          if (result.state === "granted") {
+            startLocationTracking()
+          }
         })
       } catch (error) {
         console.error("权限查询失败", error)
@@ -145,75 +150,24 @@ export default function Home() {
     } else {
       // 如果不支持permissions API，尝试获取位置来检查权限
       navigator.geolocation.getCurrentPosition(
-        () => setLocationPermissionStatus("granted"),
+        () => {
+          setLocationPermissionStatus("granted")
+          startLocationTracking()
+        },
         () => setLocationPermissionStatus("denied"),
         { timeout: 3000 },
       )
     }
   }
 
-  // 请求位置权限
-  const requestLocationPermission = () => {
-    if (!navigator.geolocation) {
-      toast({
-        title: "不支持",
-        description: "您的设备不支持地理位置功能",
-        variant: "destructive",
-      })
-      return
+  // 开始位置跟踪
+  const startLocationTracking = () => {
+    if (navigator.geolocation) {
+      // 不显示toast，静默启动位置跟踪
+      console.log("开始位置跟踪")
+    } else {
+      console.error("设备不支持地理位置功能")
     }
-
-    // 强制触发权限请求
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        console.log("位置获取成功", position.coords)
-        setIsTracking(true)
-        setLocationPermissionStatus("granted")
-        toast({
-          title: "位置跟踪已启动",
-          description: "您的位置将在地图上实时更新",
-        })
-      },
-      (error) => {
-        console.error("位置获取失败", error.code, error.message)
-        setLocationPermissionStatus("denied")
-
-        // 根据错误类型提供不同的提示
-        if (error.code === 1) {
-          // PERMISSION_DENIED
-          toast({
-            title: "位置权限被拒绝",
-            description: "请在浏览器设置中启用位置权限",
-            variant: "destructive",
-          })
-        } else if (error.code === 2) {
-          // POSITION_UNAVAILABLE
-          toast({
-            title: "位置信息不可用",
-            description: "请确保您的设备已开启GPS",
-            variant: "destructive",
-          })
-        } else if (error.code === 3) {
-          // TIMEOUT
-          toast({
-            title: "获取位置超时",
-            description: "请检查您的网络连接",
-            variant: "destructive",
-          })
-        } else {
-          toast({
-            title: "无法获取位置",
-            description: error.message,
-            variant: "destructive",
-          })
-        }
-      },
-      {
-        enableHighAccuracy: true, // 请求高精度位置
-        timeout: 10000, // 10秒超时
-        maximumAge: 0, // 不使用缓存的位置
-      },
-    )
   }
 
   // 将地图中心移动到用户位置
@@ -234,22 +188,16 @@ export default function Home() {
       x: -deltaX,
       y: -deltaY,
     })
+
+    toast({
+      title: "已定位到当前位置",
+      duration: 2000,
+    })
   }
 
-  // 处理定位按钮点击
+  // 处理定位按钮点击 - 现在只用于居中显示用户位置
   const handleLocateClick = () => {
-    if (isTracking) {
-      setIsTracking(false)
-      toast({
-        title: "位置跟踪已停止",
-      })
-    } else {
-      requestLocationPermission()
-    }
-    // 如果已经在跟踪状态，点击按钮也会将地图中心移动到用户位置
-    if (isTracking) {
-      centerMapOnUser()
-    }
+    centerMapOnUser()
   }
 
   // 处理位置更新
@@ -268,7 +216,6 @@ export default function Home() {
       description: error,
       variant: "destructive",
     })
-    setIsTracking(false)
   }
 
   // 打开罗盘设置
@@ -284,29 +231,6 @@ export default function Home() {
     setSettingsOpen(false)
   }
 
-  // 开始两点校准
-  const startCalibration = () => {
-    setIsCalibrating(true)
-    setSettingsOpen(false)
-  }
-
-  // 完成两点校准
-  const completeCalibration = (newOrientation: number, newScale: number) => {
-    setOrientation(newOrientation)
-    setScale(newScale)
-    setIsCalibrating(false)
-    toast({
-      title: "校准完成",
-      description: `方向: ${Math.round(newOrientation)}°, 比例尺: ${Math.round(newScale)}米/厘米`,
-    })
-  }
-
-  // 设置地图点
-  const handleSetMapPoint = (callback: (point: MapCoordinate) => void) => {
-    setPendingMapPointCallback(callback)
-    setIsSettingPosition(true)
-  }
-
   // 打开地图文件选择
   const openMapFileSelect = () => {
     fileInputRef.current?.click()
@@ -319,49 +243,42 @@ export default function Home() {
         mapImage={mapImage}
         zoom={zoom}
         mapOffset={mapOffset}
-        isSettingPosition={isSettingPosition || pendingMapPointCallback !== null}
-        isTracking={isTracking}
+        isSettingPosition={isSettingPosition}
+        isTracking={true} // 始终显示用户位置标记
         heading={heading}
         userPosition={userPosition}
         imageSize={imageSize}
-        scale={scale}  // 传递scale参数
+        scale={scale}
         onMapOffsetChange={setMapOffset}
         onZoomChange={setZoom}
         onUserPositionSet={(position) => {
-          if (pendingMapPointCallback) {
-            // 如果有等待的回调，执行它
-            pendingMapPointCallback(position)
-            setPendingMapPointCallback(null)
-          } else {
-            // 否则，正常设置用户位置
-            setUserPosition(position)
-            setIsSettingPosition(false)
-            toast({
-              title: "位置已设置",
-              description: "您的位置已在地图上更新",
-            })
-          }
+          setUserPosition(position)
+          setIsSettingPosition(false)
+          toast({
+            title: "位置已设置",
+            description: "您的位置已在地图上更新",
+          })
         }}
+        mapContainerRef={mapContainerRef as React.RefObject<HTMLDivElement>}
       />
 
       {/* 小型罗盘 */}
       <MiniCompass orientation={orientation} onClick={openCompassSetting} />
 
-      {/* 顶部工具栏 - 添加 onGuideClick 属性 */}
-      <Toolbar 
-        onOpenMap={openMapFileSelect} 
+      {/* 顶部工具栏 */}
+      <Toolbar
+        onOpenMap={openMapFileSelect}
         fileInputRef={fileInputRef as React.RefObject<HTMLInputElement>}
         onGuideClick={() => setIsGuideOpen(true)}
       />
       <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
 
-      {/* 移除独立的 GuideButton 组件 */}
+      {/* 使用指南弹窗 */}
       <GuideModal isOpen={isGuideOpen} onClose={() => setIsGuideOpen(false)} />
 
       {/* 控制面板 */}
       <ControlPanel
-        isSettingPosition={isSettingPosition || pendingMapPointCallback !== null}
-        isTracking={isTracking}
+        isSettingPosition={isSettingPosition}
         settingsOpen={settingsOpen}
         onZoomIn={handleZoomIn}
         onZoomOut={handleZoomOut}
@@ -369,19 +286,32 @@ export default function Home() {
         onSettings={() => setSettingsOpen(!settingsOpen)}
         onCancelPositionSetting={() => {
           setIsSettingPosition(false)
-          setPendingMapPointCallback(null)
         }}
         onConfirmPositionSetting={() => {
           if (mapContainerRef.current) {
             const containerRect = mapContainerRef.current.getBoundingClientRect()
-            const screenCenter = {
-              x: containerRect.left + containerRect.width / 2,
-              y: containerRect.top + containerRect.height / 2,
-            }
+            const centerX = containerRect.width / 2
+            const centerY = containerRect.height / 2
 
-            // 这里应该调用 screenToMapCoordinate 函数，但由于我们已经将该逻辑移到了 MapView 组件中
-            // 所以这里不再需要手动计算，MapView 组件会处理这个逻辑
-            setIsSettingPosition(false)
+            // 获取屏幕中心对应的地图坐标
+            import("@/lib/map-utils").then(({ screenToMapCoordinate }) => {
+              const mapCoord = screenToMapCoordinate(
+                { x: centerX, y: centerY },
+                containerRect,
+                imageSize,
+                mapOffset,
+                zoom,
+              )
+
+              // 更新用户位置
+              setUserPosition(mapCoord)
+              setIsSettingPosition(false)
+
+              toast({
+                title: "位置已设置",
+                description: "您的位置已在地图上更新",
+              })
+            })
           }
         }}
       />
@@ -394,9 +324,8 @@ export default function Home() {
         currentScale={getCurrentScale()}
         onOpenCompassSetting={openCompassSetting}
         onSetPosition={openPositionSetting}
-        onScaleChange={(value) => setScale(value[0])}  // 确保这里正确更新比例尺
-        onScaleInputChange={(value) => setScale(value)}  // 确保这里正确更新比例尺
-        onStartCalibration={startCalibration}
+        onScaleChange={(value) => setScale(value[0])}
+        onScaleInputChange={(value) => setScale(value)}
         onClose={() => setSettingsOpen(false)}
       />
 
@@ -409,26 +338,15 @@ export default function Home() {
         />
       )}
 
-      {/* 两点校准模式 */}
-      {isCalibrating && (
-        <Calibration
-          onComplete={completeCalibration}
-          onCancel={() => setIsCalibrating(false)}
-          onSetMapPoint={handleSetMapPoint}
-        />
-      )}
-
-      {/* 位置跟踪器 */}
-      {isTracking && (
-        <LocationTracker
-          isTracking={isTracking}
-          userPosition={userPosition}
-          orientation={orientation}
-          scale={scale}
-          onLocationUpdate={handleLocationUpdate}
-          onError={handleLocationError}
-        />
-      )}
+      {/* 位置跟踪器 - 始终保持活跃 */}
+      <LocationTracker
+        isTracking={true}
+        userPosition={userPosition}
+        orientation={orientation}
+        scale={scale}
+        onLocationUpdate={handleLocationUpdate}
+        onError={handleLocationError}
+      />
 
       {/* 消息提示器 */}
       <Toaster />

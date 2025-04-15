@@ -3,8 +3,8 @@
 import type React from "react"
 import { useRef, useState, useEffect } from "react"
 import Image from "next/image"
-import type { MapCoordinate, ScreenCoordinate, ImageSize, MapOffset } from "@/lib/types"
-import { mapToScreenCoordinate, screenToMapCoordinate, getDistanceBetweenTouches } from "@/lib/map-utils"
+import type { MapCoordinate, ImageSize, MapOffset } from "@/lib/types"
+import { mapToScreenCoordinate, getDistanceBetweenTouches } from "@/lib/map-utils"
 import { UserMarker, PositionMarker } from "./user-marker"
 
 interface MapViewProps {
@@ -16,10 +16,11 @@ interface MapViewProps {
   heading: number
   userPosition: MapCoordinate
   imageSize: ImageSize
-  scale: number  // 添加scale属性
+  scale: number
   onMapOffsetChange: (offset: MapOffset) => void
   onZoomChange: (zoom: number) => void
   onUserPositionSet: (position: MapCoordinate) => void
+  mapContainerRef?: React.RefObject<HTMLDivElement>
 }
 
 export const MapView: React.FC<MapViewProps> = ({
@@ -31,19 +32,23 @@ export const MapView: React.FC<MapViewProps> = ({
   heading,
   userPosition,
   imageSize,
-  scale,  // 添加scale参数
+  scale,
   onMapOffsetChange,
   onZoomChange,
   onUserPositionSet,
+  mapContainerRef: externalMapContainerRef,
 }) => {
   const [isDraggingMap, setIsDraggingMap] = useState(false)
   const [startDragPos, setStartDragPos] = useState({ x: 0, y: 0 })
   const [pinchDistance, setPinchDistance] = useState<number | null>(null)
   const [initialZoom, setInitialZoom] = useState<number>(1)
 
-  const mapContainerRef = useRef<HTMLDivElement>(null)
+  const internalMapContainerRef = useRef<HTMLDivElement>(null)
   const mapImageRef = useRef<HTMLDivElement>(null)
   const requestRef = useRef<number | null>(null)
+
+  // 使用外部传入的ref或内部创建的ref
+  const mapContainerRef = externalMapContainerRef || internalMapContainerRef
 
   // 计算用户位置在屏幕上的坐标
   const userScreenPosition = mapContainerRef.current
@@ -155,22 +160,6 @@ export const MapView: React.FC<MapViewProps> = ({
     onZoomChange(newZoom)
   }
 
-  // 完成位置设置
-  const completePositionSetting = () => {
-    // 设置用户位置为当前屏幕中心点对应的图片坐标
-    if (mapContainerRef.current && isSettingPosition) {
-      const containerRect = mapContainerRef.current.getBoundingClientRect()
-      const screenCenter: ScreenCoordinate = {
-        x: containerRect.left + containerRect.width / 2,
-        y: containerRect.top + containerRect.height / 2,
-      }
-
-      // 将屏幕中心点转换为图片坐标
-      const mapCoord = screenToMapCoordinate(screenCenter, containerRect, imageSize, mapOffset, zoom)
-      onUserPositionSet(mapCoord)
-    }
-  }
-
   // 清理事件监听器
   useEffect(() => {
     return () => {
@@ -179,24 +168,6 @@ export const MapView: React.FC<MapViewProps> = ({
       }
     }
   }, [])
-
-  // 如果处于位置设置模式，监听位置设置完成
-  useEffect(() => {
-    if (isSettingPosition) {
-      const handleKeyDown = (e: KeyboardEvent) => {
-        if (e.key === "Enter" || e.key === " ") {
-          completePositionSetting()
-        } else if (e.key === "Escape") {
-          // 可以添加取消设置的回调
-        }
-      }
-
-      window.addEventListener("keydown", handleKeyDown)
-      return () => {
-        window.removeEventListener("keydown", handleKeyDown)
-      }
-    }
-  }, [isSettingPosition, mapOffset, zoom])
 
   return (
     <div
@@ -222,16 +193,13 @@ export const MapView: React.FC<MapViewProps> = ({
       >
         <Image src={mapImage || "/placeholder.svg"} alt="Map" fill className="object-contain" priority />
       </div>
-
       {/* 用户位置标记 */}
       {!isSettingPosition && (
         <UserMarker userScreenPosition={userScreenPosition} isTracking={isTracking} heading={heading} />
       )}
-
       {/* 位置设置模式下的中心图钉 */}
       <PositionMarker isVisible={isSettingPosition} />
-
-      // 比例尺 - 左下方
+      {/* 比例尺 - 左下方 */}
       <div className="absolute bottom-8 left-4 bg-background/80 backdrop-blur-sm px-2 py-1 rounded-md flex items-center gap-1 z-10">
         <div className="w-16 h-1 bg-foreground"></div>
         <span className="text-xs">{Math.round(scale / zoom)}米</span>

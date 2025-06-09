@@ -1,6 +1,7 @@
 "use client"
 
 import type React from "react"
+import { Fragment } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
@@ -38,8 +39,16 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   if (!isOpen) return null
 
   return (
-    <Card className="fixed bottom-20 right-4 w-[90%] max-w-xs z-30 bg-background/95 backdrop-blur-md shadow-lg">
-      <CardContent className="p-4 space-y-4">
+    <Fragment>
+      {/* 背景遮罩 - 点击关闭 */}
+      <div
+        className="fixed inset-0 z-20 bg-black/5"
+        onClick={onClose}
+      />
+
+      {/* 设置面板 */}
+      <Card className="fixed bottom-20 right-4 w-[90%] max-w-xs z-30 bg-background/95 backdrop-blur-md shadow-lg">
+        <CardContent className="p-4 space-y-4">
         {/* 方向设置 */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
@@ -117,5 +126,6 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
         </div>
       </CardContent>
     </Card>
+    </Fragment>
   )
 }

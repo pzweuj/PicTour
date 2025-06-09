@@ -52,6 +52,12 @@ export interface Translations {
     setOrientation: string
     currentScale: string
     meters: string
+    scaleLabel: string
+    scaleUnit: string
+    actualScale: string
+    positionHint: string
+    closeSettings: string
+    scaleChanges: string
   }
   
   // 位置和定位
@@ -71,6 +77,7 @@ export interface Translations {
   // 指南
   guide: {
     title: string
+    subtitle: string
     step1: {
       title: string
       description: string
@@ -80,6 +87,10 @@ export interface Translations {
       description: string
     }
     step3: {
+      title: string
+      description: string
+    }
+    step4: {
       title: string
       description: string
     }
@@ -140,9 +151,15 @@ export const zhTranslations: Translations = {
     scale: "比例尺",
     position: "位置",
     setPosition: "设置位置",
-    setOrientation: "设置方向", 
+    setOrientation: "设置方向",
     currentScale: "当前比例尺",
-    meters: "米"
+    meters: "米",
+    scaleLabel: "比例尺 (米/厘米)",
+    scaleUnit: "米/厘米",
+    actualScale: "当前实际比例尺",
+    positionHint: "点击按钮后，拖动地图使图钉指向您的当前位置",
+    closeSettings: "关闭设置",
+    scaleChanges: "(随缩放变化)"
   },
   
   location: {
@@ -160,19 +177,24 @@ export const zhTranslations: Translations = {
   
   guide: {
     title: "使用指南",
+    subtitle: "按照以下步骤设置您的地图导览",
     step1: {
       title: "导入地图",
-      description: "点击左上角按钮，从相册选择景区地图照片"
+      description: "点击顶部的\"导入地图\"按钮，选择您要使用的地图图片文件。"
     },
     step2: {
-      title: "设置位置",
-      description: "在设置中点击\"设置位置\"，将地图拖动到您当前的实际位置"
+      title: "设置比例尺",
+      description: "点击右下角的设置按钮，调整比例尺以匹配地图的实际比例。"
     },
     step3: {
       title: "调整方向",
-      description: "点击右上角罗盘，旋转调整地图方向与实际方向一致"
+      description: "点击右上角的罗盘，旋转调整地图方向与实际方向一致。"
     },
-    close: "关闭",
+    step4: {
+      title: "设置当前位置",
+      description: "点击右下角的设置按钮，选择\"设置当前位置\"，然后在地图上标记您的位置。"
+    },
+    close: "我知道了",
     next: "下一步",
     previous: "上一步"
   },
@@ -226,11 +248,17 @@ export const enTranslations: Translations = {
     title: "Settings",
     orientation: "Map Orientation",
     scale: "Scale",
-    position: "Position", 
+    position: "Position",
     setPosition: "Set Position",
     setOrientation: "Set Orientation",
     currentScale: "Current Scale",
-    meters: "meters"
+    meters: "meters",
+    scaleLabel: "Scale (meters/cm)",
+    scaleUnit: "meters/cm",
+    actualScale: "Current actual scale",
+    positionHint: "After clicking the button, drag the map to point the pin to your current location",
+    closeSettings: "Close Settings",
+    scaleChanges: "(changes with zoom)"
   },
   
   location: {
@@ -248,20 +276,25 @@ export const enTranslations: Translations = {
   
   guide: {
     title: "User Guide",
+    subtitle: "Follow these steps to set up your map navigation",
     step1: {
       title: "Import Map",
-      description: "Click the top-left button to select a scenic area map photo from your album"
+      description: "Click the \"Import Map\" button at the top to select the map image file you want to use."
     },
     step2: {
-      title: "Set Position", 
-      description: "In settings, click 'Set Position' and drag the map to your current actual location"
+      title: "Set Scale",
+      description: "Click the settings button in the bottom-right corner and adjust the scale to match the actual scale of the map."
     },
     step3: {
       title: "Adjust Direction",
-      description: "Click the compass in the top-right corner and rotate to align the map direction with reality"
+      description: "Click the compass in the top-right corner and rotate to align the map direction with reality."
     },
-    close: "Close",
-    next: "Next", 
+    step4: {
+      title: "Set Current Position",
+      description: "Click the settings button in the bottom-right corner, select \"Set Position\", and then mark your location on the map."
+    },
+    close: "Got it",
+    next: "Next",
     previous: "Previous"
   },
   

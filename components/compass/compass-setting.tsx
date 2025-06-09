@@ -292,7 +292,7 @@ export const CompassSetting: React.FC<CompassSettingProps> = ({ tempOrientation,
           </div>
 
           {/* 添加旋转提示 */}
-          <div className="absolute -top-16 left-1/2 -translate-x-1/2 bg-blue-50 px-4 py-2 rounded-full text-base text-blue-600 shadow-md border border-blue-100 flex items-center gap-2">
+          <div className="absolute -top-16 left-1/2 -translate-x-1/2 bg-blue-50 px-4 py-2 rounded-full text-base text-blue-600 shadow-md border border-blue-100 flex items-center gap-2 whitespace-nowrap">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="16"
@@ -318,7 +318,7 @@ export const CompassSetting: React.FC<CompassSettingProps> = ({ tempOrientation,
             <span>{displayAngle}°</span>
             <span className="text-lg text-slate-100">({getOrientationName(displayAngle)})</span>
           </div>
-          <div className="text-base text-white bg-blue-600/80 px-4 py-2 rounded-full mt-2 shadow-lg">
+          <div className="text-base text-white bg-blue-600/80 px-4 py-2 rounded-full mt-2 shadow-lg whitespace-nowrap">
             {t.compass.clickToConfirm}
           </div>
         </div>

@@ -69,7 +69,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
           </div>
           <div className="space-y-2">
             <div className="flex justify-between">
-              <Label htmlFor="scale">比例尺 (米/厘米)</Label>
+              <Label htmlFor="scale">{t.settings.scaleLabel}</Label>
               <span className="text-sm font-medium">{scale} {t.settings.meters}</span>
             </div>
             <Slider id="scale" min={10} max={500} step={10} value={[scale]} onValueChange={onScaleChange} />
@@ -82,9 +82,9 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
               min={1}
               className="w-24"
             />
-            <span className="text-sm">米/厘米</span>
+            <span className="text-sm">{t.settings.scaleUnit}</span>
           </div>
-          <div className="text-xs text-muted-foreground">当前实际比例尺: {currentScale} 米/厘米 (随缩放变化)</div>
+          <div className="text-xs text-muted-foreground">{t.settings.actualScale}: {currentScale} {t.settings.scaleUnit} {t.settings.scaleChanges}</div>
         </div>
 
         {/* 位置设置 */}
@@ -100,7 +100,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
           >
             {t.settings.setPosition}
           </Button>
-          <p className="text-sm text-muted-foreground">点击按钮后，拖动地图使图钉指向您的当前位置</p>
+          <p className="text-sm text-muted-foreground">{t.settings.positionHint}</p>
         </div>
 
         {/* 关闭按钮 */}
@@ -112,7 +112,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             onClick={onClose}
           >
             <ChevronDown className="h-4 w-4 mr-2" />
-            关闭设置
+            {t.settings.closeSettings}
           </Button>
         </div>
       </CardContent>

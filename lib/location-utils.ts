@@ -72,17 +72,32 @@ export function gpsToMapCoordinate(
   // 将距离转换为地图上的像素距离
   // scale是比例尺（米/厘米），需要转换为像素/米
   // 假设1厘米 = 38像素（这是一个估计值，可能需要根据实际情况调整）
-  const pixelsPerMeter = 38 / 100 / scale
+  // 公式：pixelsPerMeter = (像素/厘米) / (米/厘米) = 38 / scale
+  const pixelsPerMeter = 38 / scale
 
   // 计算在地图上的x和y偏移（像素）
   const xOffset = distance * Math.sin((adjustedBearing * Math.PI) / 180) * pixelsPerMeter
   const yOffset = distance * Math.cos((adjustedBearing * Math.PI) / 180) * pixelsPerMeter
 
   // 计算最终的地图坐标
-  return {
+  const result = {
     x: referencePoint.mapCoord.x + xOffset,
     y: referencePoint.mapCoord.y - yOffset, // 注意：y轴在屏幕上是向下的，所以这里是减法
   }
+
+  // 添加调试信息
+  console.log("GPS坐标转换详情:", {
+    distance: distance.toFixed(2) + "米",
+    bearing: bearing.toFixed(2) + "°",
+    adjustedBearing: adjustedBearing.toFixed(2) + "°",
+    pixelsPerMeter: pixelsPerMeter.toFixed(4),
+    xOffset: xOffset.toFixed(2),
+    yOffset: yOffset.toFixed(2),
+    referencePoint: referencePoint.mapCoord,
+    result,
+  })
+
+  return result
 }
 
 // 获取当前位置的Promise包装

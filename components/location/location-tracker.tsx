@@ -4,7 +4,7 @@ import type React from "react"
 
 import { useState, useEffect, useRef } from "react"
 import type { GPSCoordinate, ReferencePoint } from "@/lib/location-utils"
-import { getCurrentPosition, positionToGPSCoordinate, gpsToMapCoordinate } from "@/lib/location-utils"
+import { getCurrentPosition, positionToGPSCoordinate, gpsToMapCoordinate, calculateDistance } from "@/lib/location-utils"
 import type { MapCoordinate } from "@/lib/types"
 
 interface LocationTrackerProps {
@@ -12,6 +12,7 @@ interface LocationTrackerProps {
   userPosition: MapCoordinate
   orientation: number
   scale: number
+  imageSize: { width: number; height: number }
   onLocationUpdate: (newPosition: MapCoordinate, heading: number) => void
   onError: (error: string) => void
 }
@@ -21,6 +22,7 @@ export const LocationTracker: React.FC<LocationTrackerProps> = ({
   userPosition,
   orientation,
   scale,
+  imageSize,
   onLocationUpdate,
   onError,
 }) => {
@@ -37,11 +39,16 @@ export const LocationTracker: React.FC<LocationTrackerProps> = ({
 
   // 初始化参考点
   useEffect(() => {
-    if (isTracking && !isReferenceInitialized && !hasRequestedPermission.current) {
-      hasRequestedPermission.current = true
-      initializeReferencePoint()
+    if (isTracking && !isReferenceInitialized && !hasRequestedPermission.current && imageSize.width > 0) {
+      // 添加一个小延迟，确保所有状态都已更新
+      const timer = setTimeout(() => {
+        hasRequestedPermission.current = true
+        initializeReferencePoint()
+      }, 100)
+
+      return () => clearTimeout(timer)
     }
-  }, [isTracking, isReferenceInitialized])
+  }, [isTracking, isReferenceInitialized, imageSize])
 
   // 当跟踪状态改变时，开始或停止位置监听
   useEffect(() => {
@@ -75,19 +82,31 @@ export const LocationTracker: React.FC<LocationTrackerProps> = ({
 
       const gpsCoord = positionToGPSCoordinate(position)
 
+      // 使用图片中心作为参考点的地图坐标，确保定位点在屏幕中心
+      const centerMapCoord = {
+        x: imageSize.width / 2,
+        y: imageSize.height / 2,
+      }
+
+      console.log("LocationTracker 初始化参考点:", {
+        图片尺寸: imageSize,
+        参考点地图坐标: centerMapCoord,
+        GPS坐标: gpsCoord,
+      })
+
       // 创建参考点
       setReferencePoint({
-        mapCoord: userPosition, // 用户在地图上设置的当前位置
+        mapCoord: centerMapCoord, // 使用图片中心作为参考点
         gpsCoord, // 对应的GPS坐标
       })
 
       setCurrentGPS(gpsCoord)
       setIsReferenceInitialized(true) // 标记参考点已初始化
 
-      console.log("参考点已初始化:", {
-        mapCoord: userPosition,
-        gpsCoord,
-      })
+      // 立即更新用户位置到参考点位置，确保初始化时定位点在正确位置
+      onLocationUpdate(centerMapCoord, gpsCoord.heading || 0)
+
+      console.log("已更新用户位置到参考点:", centerMapCoord)
     } catch (error) {
       console.error("初始化参考点失败:", error)
       onError("无法获取您的位置，请确保已授予位置权限。")
@@ -140,6 +159,19 @@ export const LocationTracker: React.FC<LocationTrackerProps> = ({
     if (!referencePoint || !currentGPS) return
 
     try {
+      // 计算当前GPS坐标与参考点之间的距离
+      const distance = calculateDistance(referencePoint.gpsCoord, currentGPS)
+
+      // 如果距离很小（小于5米），认为用户没有移动，保持在参考点位置
+      if (distance < 5) {
+        console.log("GPS变化很小，保持在参考点位置:", distance, "米")
+        // 获取方向（如果可用）
+        const heading = currentGPS.heading !== null && currentGPS.heading !== undefined ? currentGPS.heading : 0
+        // 保持在参考点的地图坐标
+        onLocationUpdate(referencePoint.mapCoord, heading)
+        return
+      }
+
       // 将GPS坐标转换为地图坐标
       const newMapPosition = gpsToMapCoordinate(currentGPS, referencePoint, orientation, scale)
 
@@ -153,19 +185,22 @@ export const LocationTracker: React.FC<LocationTrackerProps> = ({
         gps: currentGPS,
         map: newMapPosition,
         heading,
+        distance: distance + "米",
       })
     } catch (error) {
       console.error("更新地图位置失败:", error)
     }
   }
 
-  // 当用户位置、方向或比例尺发生变化时，重置参考点
+  // 当方向、比例尺或图片尺寸发生变化时，重置参考点
   useEffect(() => {
     if (isTracking && isReferenceInitialized) {
       // 重置参考点初始化状态，以便在下次跟踪时重新初始化
       setIsReferenceInitialized(false)
+      hasRequestedPermission.current = false
+      console.log("图片尺寸或设置变化，重置参考点")
     }
-  }, [userPosition, orientation, scale])
+  }, [orientation, scale, imageSize.width, imageSize.height])
 
   // 组件不渲染任何UI元素
   return null

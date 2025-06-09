@@ -20,10 +20,22 @@ export const mapToScreenCoordinate = (
   const deltaY = (mapCoord.y - imageSize.height / 2) * zoom
 
   // 计算最终屏幕坐标
-  return {
+  const result = {
     x: imageCenterScreenX + deltaX,
     y: imageCenterScreenY + deltaY,
   }
+
+  // 只在位置不在中心时输出调试信息
+  if (deltaX !== 0 || deltaY !== 0) {
+    console.log("用户位置偏离中心:", {
+      地图坐标: mapCoord,
+      图片中心: { x: imageSize.width / 2, y: imageSize.height / 2 },
+      偏移量: { deltaX, deltaY },
+      屏幕位置: result,
+    })
+  }
+
+  return result
 }
 
 // 坐标转换：屏幕坐标 -> 图片坐标

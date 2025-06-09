@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Compass, MapPin, Ruler, ChevronDown } from "lucide-react"
 import { getOrientationName } from "@/lib/map-utils"
+import { useLanguage } from "@/contexts/language-context"
 
 interface SettingsPanelProps {
   isOpen: boolean
@@ -32,6 +33,8 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   onScaleInputChange,
   onClose,
 }) => {
+  const { t } = useLanguage()
+
   if (!isOpen) return null
 
   return (
@@ -42,7 +45,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Compass className="h-5 w-5 text-primary" />
-              <h4 className="font-medium">地图方向</h4>
+              <h4 className="font-medium">{t.settings.orientation}</h4>
             </div>
             <Button
               variant="outline"
@@ -50,11 +53,11 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
               onClick={onOpenCompassSetting}
               className="active:shadow-lg active:scale-95 transition-all duration-75 shadow-none"
             >
-              设置方向
+              {t.settings.setOrientation}
             </Button>
           </div>
           <div className="text-sm text-muted-foreground">
-            当前方向: {Math.round(orientation)}° ({getOrientationName(orientation)})
+            {t.compass.currentDirection}: {Math.round(orientation)}° ({getOrientationName(orientation)})
           </div>
         </div>
 
@@ -62,12 +65,12 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <Ruler className="h-5 w-5 text-primary" />
-            <h4 className="font-medium">比例尺</h4>
+            <h4 className="font-medium">{t.settings.scale}</h4>
           </div>
           <div className="space-y-2">
             <div className="flex justify-between">
               <Label htmlFor="scale">比例尺 (米/厘米)</Label>
-              <span className="text-sm font-medium">{scale} 米</span>
+              <span className="text-sm font-medium">{scale} {t.settings.meters}</span>
             </div>
             <Slider id="scale" min={10} max={500} step={10} value={[scale]} onValueChange={onScaleChange} />
           </div>
@@ -88,14 +91,14 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <MapPin className="h-5 w-5 text-primary" />
-            <h4 className="font-medium">当前位置</h4>
+            <h4 className="font-medium">{t.settings.position}</h4>
           </div>
           <Button
             variant="outline"
             className="w-full active:shadow-lg active:scale-95 transition-all duration-75 shadow-none"
             onClick={onSetPosition}
           >
-            设置当前位置
+            {t.settings.setPosition}
           </Button>
           <p className="text-sm text-muted-foreground">点击按钮后，拖动地图使图钉指向您的当前位置</p>
         </div>

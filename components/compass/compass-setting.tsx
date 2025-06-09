@@ -4,6 +4,7 @@ import type React from "react"
 import { useRef, useEffect, useState } from "react"
 import { Compass } from "lucide-react"
 import { getOrientationName } from "@/lib/map-utils"
+import { useLanguage } from "@/contexts/language-context"
 
 interface CompassSettingProps {
   tempOrientation: number
@@ -12,6 +13,7 @@ interface CompassSettingProps {
 }
 
 export const CompassSetting: React.FC<CompassSettingProps> = ({ tempOrientation, setTempOrientation, onConfirm }) => {
+  const { t } = useLanguage()
   const compassDialRef = useRef<HTMLDivElement>(null)
   const compassContainerRef = useRef<HTMLDivElement>(null)
 
@@ -199,7 +201,7 @@ export const CompassSetting: React.FC<CompassSettingProps> = ({ tempOrientation,
                     className={`absolute top-16 text-lg font-bold ${angle === 0 ? "text-red-500" : "text-blue-600"} left-1/2 -translate-x-1/2 whitespace-nowrap`}
                     style={{ textShadow: "0 1px 2px rgba(0,0,0,0.1)" }}
                   >
-                    {angle === 0 ? "北" : angle === 90 ? "东" : angle === 180 ? "南" : "西"}
+                    {angle === 0 ? t.compass.north : angle === 90 ? t.compass.east : angle === 180 ? t.compass.south : t.compass.west}
                   </div>
                   <div
                     className={`absolute top-20 text-xs ${angle === 0 ? "text-red-400" : "text-blue-400"} left-1/2 -translate-x-1/2`}
@@ -221,7 +223,7 @@ export const CompassSetting: React.FC<CompassSettingProps> = ({ tempOrientation,
                     className="absolute top-12 text-sm font-medium text-blue-500/80 left-1/2 -translate-x-1/2 whitespace-nowrap"
                     style={{ textShadow: "0 1px 1px rgba(0,0,0,0.05)" }}
                   >
-                    {angle === 45 ? "东北" : angle === 135 ? "东南" : angle === 225 ? "西南" : "西北"}
+                    {angle === 45 ? t.compass.northeast : angle === 135 ? t.compass.southeast : angle === 225 ? t.compass.southwest : t.compass.northwest}
                   </div>
                   <div
                     className="absolute top-16 text-xs text-blue-400/70 left-1/2 -translate-x-1/2"
@@ -306,7 +308,7 @@ export const CompassSetting: React.FC<CompassSettingProps> = ({ tempOrientation,
               <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"></path>
               <path d="M21 3v5h-5"></path>
             </svg>
-            旋转调整方向
+            {t.compass.rotateHint}
           </div>
         </div>
 
@@ -317,7 +319,7 @@ export const CompassSetting: React.FC<CompassSettingProps> = ({ tempOrientation,
             <span className="text-lg text-slate-100">({getOrientationName(displayAngle)})</span>
           </div>
           <div className="text-base text-white bg-blue-600/80 px-4 py-2 rounded-full mt-2 shadow-lg">
-            点击空白区域确认设置
+            {t.compass.clickToConfirm}
           </div>
         </div>
       </div>

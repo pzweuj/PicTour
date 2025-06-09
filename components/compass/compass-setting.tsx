@@ -13,7 +13,7 @@ interface CompassSettingProps {
 }
 
 export const CompassSetting: React.FC<CompassSettingProps> = ({ tempOrientation, setTempOrientation, onConfirm }) => {
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   const compassDialRef = useRef<HTMLDivElement>(null)
   const compassContainerRef = useRef<HTMLDivElement>(null)
 
@@ -316,7 +316,7 @@ export const CompassSetting: React.FC<CompassSettingProps> = ({ tempOrientation,
         <div className="flex flex-col items-center gap-1 mt-4">
           <div className="text-2xl font-bold text-white flex items-center gap-2 drop-shadow-lg">
             <span>{displayAngle}°</span>
-            <span className="text-lg text-slate-100">({getOrientationName(displayAngle)})</span>
+            <span className="text-lg text-slate-100">({getOrientationName(displayAngle, language)})</span>
           </div>
           <div className="text-base text-white bg-blue-600/80 px-4 py-2 rounded-full mt-2 shadow-lg whitespace-nowrap">
             {t.compass.clickToConfirm}

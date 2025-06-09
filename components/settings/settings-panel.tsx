@@ -33,7 +33,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   onScaleInputChange,
   onClose,
 }) => {
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
 
   if (!isOpen) return null
 
@@ -57,7 +57,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             </Button>
           </div>
           <div className="text-sm text-muted-foreground">
-            {t.compass.currentDirection}: {Math.round(orientation)}° ({getOrientationName(orientation)})
+            {t.compass.currentDirection}: {Math.round(orientation)}° ({getOrientationName(orientation, language)})
           </div>
         </div>
 

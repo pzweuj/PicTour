@@ -196,10 +196,15 @@ export const CompassSetting: React.FC<CompassSettingProps> = ({ tempOrientation,
                     className={`absolute top-0 w-2 h-14 ${angle === 0 ? "bg-red-500" : "bg-blue-600"} left-1/2 -translate-x-1/2 rounded-b-sm`}
                   ></div>
                   <div
-                    className={`absolute top-16 text-xl font-bold ${angle === 0 ? "text-red-500" : "text-blue-600"} left-1/2 -translate-x-1/2`}
+                    className={`absolute top-16 text-lg font-bold ${angle === 0 ? "text-red-500" : "text-blue-600"} left-1/2 -translate-x-1/2 whitespace-nowrap`}
                     style={{ textShadow: "0 1px 2px rgba(0,0,0,0.1)" }}
                   >
-                    {angle === 0 ? "北(N)" : angle === 90 ? "东(E)" : angle === 180 ? "南(S)" : "西(W)"}
+                    {angle === 0 ? "北" : angle === 90 ? "东" : angle === 180 ? "南" : "西"}
+                  </div>
+                  <div
+                    className={`absolute top-20 text-xs ${angle === 0 ? "text-red-400" : "text-blue-400"} left-1/2 -translate-x-1/2`}
+                  >
+                    {angle === 0 ? "N" : angle === 90 ? "E" : angle === 180 ? "S" : "W"}
                   </div>
                 </div>
               ))}
@@ -213,10 +218,15 @@ export const CompassSetting: React.FC<CompassSettingProps> = ({ tempOrientation,
                 >
                   <div className="absolute top-0 w-1.5 h-10 bg-blue-500/80 left-1/2 -translate-x-1/2 rounded-b-sm"></div>
                   <div
-                    className="absolute top-12 text-sm font-medium text-blue-500/80 left-1/2 -translate-x-1/2"
+                    className="absolute top-12 text-sm font-medium text-blue-500/80 left-1/2 -translate-x-1/2 whitespace-nowrap"
                     style={{ textShadow: "0 1px 1px rgba(0,0,0,0.05)" }}
                   >
                     {angle === 45 ? "东北" : angle === 135 ? "东南" : angle === 225 ? "西南" : "西北"}
+                  </div>
+                  <div
+                    className="absolute top-16 text-xs text-blue-400/70 left-1/2 -translate-x-1/2"
+                  >
+                    {angle === 45 ? "NE" : angle === 135 ? "SE" : angle === 225 ? "SW" : "NW"}
                   </div>
                 </div>
               ))}
@@ -229,7 +239,7 @@ export const CompassSetting: React.FC<CompassSettingProps> = ({ tempOrientation,
                   style={{ transform: `rotate(${angle}deg)` }}
                 >
                   <div className="absolute top-0 w-1 h-7 bg-blue-400/60 left-1/2 -translate-x-1/2"></div>
-                  <div className="absolute top-8 text-xs font-medium text-blue-400/70 left-1/2 -translate-x-1/2">
+                  <div className="absolute top-8 text-xs font-medium text-blue-400/70 left-1/2 -translate-x-1/2 whitespace-nowrap">
                     {angle}°
                   </div>
                 </div>

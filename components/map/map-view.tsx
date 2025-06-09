@@ -55,19 +55,7 @@ export const MapView: React.FC<MapViewProps> = ({
     ? mapToScreenCoordinate(userPosition, mapContainerRef.current.getBoundingClientRect(), imageSize, mapOffset, zoom)
     : { x: 0, y: 0 }
 
-  // 只在用户位置不在图片中心时输出调试信息
-  useEffect(() => {
-    const isAtCenter = userPosition.x === imageSize.width / 2 && userPosition.y === imageSize.height / 2
-    if (!isAtCenter && mapContainerRef.current) {
-      const containerRect = mapContainerRef.current.getBoundingClientRect()
-      console.log("用户位置偏离图片中心:", {
-        用户地图位置: userPosition,
-        图片中心: { x: imageSize.width / 2, y: imageSize.height / 2 },
-        用户屏幕位置: userScreenPosition,
-        容器中心: { x: containerRect.width / 2, y: containerRect.height / 2 },
-      })
-    }
-  }, [userPosition, userScreenPosition, imageSize, mapOffset, zoom])
+
 
   // 处理地图拖动 - 鼠标事件
   const handleMapMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {

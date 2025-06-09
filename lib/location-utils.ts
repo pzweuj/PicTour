@@ -85,17 +85,7 @@ export function gpsToMapCoordinate(
     y: referencePoint.mapCoord.y - yOffset, // 注意：y轴在屏幕上是向下的，所以这里是减法
   }
 
-  // 添加调试信息
-  console.log("GPS坐标转换详情:", {
-    distance: distance.toFixed(2) + "米",
-    bearing: bearing.toFixed(2) + "°",
-    adjustedBearing: adjustedBearing.toFixed(2) + "°",
-    pixelsPerMeter: pixelsPerMeter.toFixed(4),
-    xOffset: xOffset.toFixed(2),
-    yOffset: yOffset.toFixed(2),
-    referencePoint: referencePoint.mapCoord,
-    result,
-  })
+
 
   return result
 }

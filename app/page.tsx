@@ -60,10 +60,7 @@ export default function Home() {
       const newImageSize = { width: img.width, height: img.height }
       const newUserPosition = { x: img.width / 2, y: img.height / 2 }
 
-      console.log("图片加载完成:", {
-        图片尺寸: newImageSize,
-        新用户位置: newUserPosition,
-      })
+
 
       setImageSize(newImageSize)
       // 初始化用户位置在图片中心
@@ -213,11 +210,6 @@ export default function Home() {
 
   // 处理位置更新
   const handleLocationUpdate = (newPosition: MapCoordinate, newHeading: number) => {
-    console.log("主页面收到位置更新:", {
-      旧位置: userPosition,
-      新位置: newPosition,
-      图片尺寸: imageSize,
-    })
     setUserPosition(newPosition)
     if (newHeading !== 0) {
       setHeading(newHeading)

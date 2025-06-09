@@ -88,11 +88,7 @@ export const LocationTracker: React.FC<LocationTrackerProps> = ({
         y: imageSize.height / 2,
       }
 
-      console.log("LocationTracker 初始化参考点:", {
-        图片尺寸: imageSize,
-        参考点地图坐标: centerMapCoord,
-        GPS坐标: gpsCoord,
-      })
+
 
       // 创建参考点
       setReferencePoint({
@@ -106,7 +102,7 @@ export const LocationTracker: React.FC<LocationTrackerProps> = ({
       // 立即更新用户位置到参考点位置，确保初始化时定位点在正确位置
       onLocationUpdate(centerMapCoord, gpsCoord.heading || 0)
 
-      console.log("已更新用户位置到参考点:", centerMapCoord)
+
     } catch (error) {
       console.error("初始化参考点失败:", error)
       onError("无法获取您的位置，请确保已授予位置权限。")

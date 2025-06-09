@@ -25,15 +25,7 @@ export const mapToScreenCoordinate = (
     y: imageCenterScreenY + deltaY,
   }
 
-  // 只在位置不在中心时输出调试信息
-  if (deltaX !== 0 || deltaY !== 0) {
-    console.log("用户位置偏离中心:", {
-      地图坐标: mapCoord,
-      图片中心: { x: imageSize.width / 2, y: imageSize.height / 2 },
-      偏移量: { deltaX, deltaY },
-      屏幕位置: result,
-    })
-  }
+
 
   return result
 }
@@ -76,12 +68,15 @@ export const getDistanceBetweenTouches = (touch1: Touch, touch2: Touch): number 
 
 // 计算方向名称
 export const getOrientationName = (angle: number): string => {
-  if (angle >= 337.5 || angle < 22.5) return "北"
-  if (angle >= 22.5 && angle < 67.5) return "东北"
-  if (angle >= 67.5 && angle < 112.5) return "东"
-  if (angle >= 112.5 && angle < 157.5) return "东南"
-  if (angle >= 157.5 && angle < 202.5) return "南"
-  if (angle >= 202.5 && angle < 247.5) return "西南"
-  if (angle >= 247.5 && angle < 292.5) return "西"
+  // 规范化角度到0-360范围
+  const normalizedAngle = ((angle % 360) + 360) % 360
+
+  if (normalizedAngle >= 337.5 || normalizedAngle < 22.5) return "正北"
+  if (normalizedAngle >= 22.5 && normalizedAngle < 67.5) return "东北"
+  if (normalizedAngle >= 67.5 && normalizedAngle < 112.5) return "正东"
+  if (normalizedAngle >= 112.5 && normalizedAngle < 157.5) return "东南"
+  if (normalizedAngle >= 157.5 && normalizedAngle < 202.5) return "正南"
+  if (normalizedAngle >= 202.5 && normalizedAngle < 247.5) return "西南"
+  if (normalizedAngle >= 247.5 && normalizedAngle < 292.5) return "正西"
   return "西北"
 }

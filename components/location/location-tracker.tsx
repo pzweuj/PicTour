@@ -6,25 +6,30 @@ import { useState, useEffect, useRef } from "react"
 import type { GPSCoordinate, ReferencePoint } from "@/lib/location-utils"
 import { getCurrentPosition, positionToGPSCoordinate, gpsToMapCoordinate, calculateDistance } from "@/lib/location-utils"
 import type { MapCoordinate } from "@/lib/types"
+import type { LocationConfidenceState } from "./location-confidence"
 
 interface LocationTrackerProps {
   isTracking: boolean
-  userPosition: MapCoordinate
+  referencePosition: MapCoordinate
+  referenceVersion: number
   orientation: number
   scale: number
   imageSize: { width: number; height: number }
   onLocationUpdate: (newPosition: MapCoordinate, heading: number) => void
   onError: (error: string) => void
+  onStatusChange?: (state: LocationConfidenceState) => void
 }
 
 export const LocationTracker: React.FC<LocationTrackerProps> = ({
   isTracking,
-  userPosition,
+  referencePosition,
+  referenceVersion,
   orientation,
   scale,
   imageSize,
   onLocationUpdate,
   onError,
+  onStatusChange,
 }) => {
   // 存储参考点（用户设置的初始位置和对应的GPS坐标）
   const [referencePoint, setReferencePoint] = useState<ReferencePoint | null>(null)
@@ -32,23 +37,20 @@ export const LocationTracker: React.FC<LocationTrackerProps> = ({
   const [currentGPS, setCurrentGPS] = useState<GPSCoordinate | null>(null)
   // 存储位置监听器ID
   const watchIdRef = useRef<number | null>(null)
-  // 添加一个标志，表示是否已初始化参考点
-  const [isReferenceInitialized, setIsReferenceInitialized] = useState(false)
-  // 添加一个标志，表示是否已经请求过位置权限
-  const hasRequestedPermission = useRef(false)
+  // 防止较慢的定位请求覆盖较新的校准点
+  const referenceRequestIdRef = useRef(0)
 
   // 初始化参考点
   useEffect(() => {
-    if (isTracking && !isReferenceInitialized && !hasRequestedPermission.current && imageSize.width > 0) {
-      // 添加一个小延迟，确保所有状态都已更新
-      const timer = setTimeout(() => {
-        hasRequestedPermission.current = true
-        initializeReferencePoint()
-      }, 100)
+    if (!isTracking || imageSize.width <= 0 || imageSize.height <= 0) return
 
-      return () => clearTimeout(timer)
-    }
-  }, [isTracking, isReferenceInitialized, imageSize])
+    // 添加一个小延迟，确保手动校准位置和图片尺寸状态都已更新
+    const timer = setTimeout(() => {
+      initializeReferencePoint(referencePosition)
+    }, 100)
+
+    return () => clearTimeout(timer)
+  }, [isTracking, imageSize.width, imageSize.height, referenceVersion])
 
   // 当跟踪状态改变时，开始或停止位置监听
   useEffect(() => {
@@ -71,8 +73,11 @@ export const LocationTracker: React.FC<LocationTrackerProps> = ({
   }, [currentGPS, referencePoint, orientation, scale, isTracking])
 
   // 初始化参考点
-  const initializeReferencePoint = async () => {
+  const initializeReferencePoint = async (mapCoord: MapCoordinate) => {
+    const requestId = ++referenceRequestIdRef.current
+
     try {
+      onStatusChange?.({ status: "requesting", message: "正在获取 GPS 参考点" })
       // 获取当前GPS位置
       const position = await getCurrentPosition({
         enableHighAccuracy: true,
@@ -82,30 +87,30 @@ export const LocationTracker: React.FC<LocationTrackerProps> = ({
 
       const gpsCoord = positionToGPSCoordinate(position)
 
-      // 使用图片中心作为参考点的地图坐标，确保定位点在屏幕中心
-      const centerMapCoord = {
-        x: imageSize.width / 2,
-        y: imageSize.height / 2,
-      }
-
-
+      if (requestId !== referenceRequestIdRef.current) return
 
       // 创建参考点
       setReferencePoint({
-        mapCoord: centerMapCoord, // 使用图片中心作为参考点
+        mapCoord, // 使用用户手动校准的位置作为参考点
         gpsCoord, // 对应的GPS坐标
       })
 
       setCurrentGPS(gpsCoord)
-      setIsReferenceInitialized(true) // 标记参考点已初始化
+      onStatusChange?.({
+        status: "tracking",
+        accuracy: gpsCoord.accuracy,
+        updatedAt: gpsCoord.timestamp || Date.now(),
+      })
 
       // 立即更新用户位置到参考点位置，确保初始化时定位点在正确位置
-      onLocationUpdate(centerMapCoord, gpsCoord.heading || 0)
+      onLocationUpdate(mapCoord, gpsCoord.heading || 0)
 
 
     } catch (error) {
       console.error("初始化参考点失败:", error)
-      onError("无法获取您的位置，请确保已授予位置权限。")
+      const message = "无法获取您的位置，请确保已授予位置权限。"
+      onStatusChange?.({ status: "error", message })
+      onError(message)
     }
   }
 
@@ -116,19 +121,29 @@ export const LocationTracker: React.FC<LocationTrackerProps> = ({
     }
 
     if (!navigator.geolocation) {
-      onError("您的浏览器不支持地理位置功能。")
+      const message = "您的浏览器不支持地理位置功能。"
+      onStatusChange?.({ status: "error", message })
+      onError(message)
       return
     }
 
     try {
+      onStatusChange?.({ status: "requesting", message: "正在监听 GPS 位置" })
       watchIdRef.current = navigator.geolocation.watchPosition(
         (position) => {
           const gpsCoord = positionToGPSCoordinate(position)
           setCurrentGPS(gpsCoord)
+          onStatusChange?.({
+            status: "tracking",
+            accuracy: gpsCoord.accuracy,
+            updatedAt: gpsCoord.timestamp || Date.now(),
+          })
         },
         (error) => {
           console.error("位置跟踪错误:", error)
-          onError(`位置跟踪错误: ${getGeolocationErrorMessage(error)}`)
+          const message = `位置跟踪错误: ${getGeolocationErrorMessage(error)}`
+          onStatusChange?.({ status: "error", message })
+          onError(message)
         },
         {
           enableHighAccuracy: true,
@@ -138,7 +153,9 @@ export const LocationTracker: React.FC<LocationTrackerProps> = ({
       )
     } catch (error) {
       console.error("启动位置跟踪失败:", error)
-      onError("启动位置跟踪失败。")
+      const message = "启动位置跟踪失败。"
+      onStatusChange?.({ status: "error", message })
+      onError(message)
     }
   }
 
@@ -187,16 +204,6 @@ export const LocationTracker: React.FC<LocationTrackerProps> = ({
       console.error("更新地图位置失败:", error)
     }
   }
-
-  // 当方向、比例尺或图片尺寸发生变化时，重置参考点
-  useEffect(() => {
-    if (isTracking && isReferenceInitialized) {
-      // 重置参考点初始化状态，以便在下次跟踪时重新初始化
-      setIsReferenceInitialized(false)
-      hasRequestedPermission.current = false
-      console.log("图片尺寸或设置变化，重置参考点")
-    }
-  }, [orientation, scale, imageSize.width, imageSize.height])
 
   // 组件不渲染任何UI元素
   return null

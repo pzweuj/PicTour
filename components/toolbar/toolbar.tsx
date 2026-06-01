@@ -3,7 +3,7 @@
 import type React from "react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
-import { ImageIcon, HelpCircle } from "lucide-react"
+import { ImageIcon, HelpCircle, ShieldCheck, Trash2 } from "lucide-react"
 import { LanguageSwitcher } from "@/components/language/language-switcher"
 import { useLanguage } from "@/contexts/language-context"
 
@@ -11,9 +11,11 @@ interface ToolbarProps {
   onOpenMap: () => void
   fileInputRef: React.RefObject<HTMLInputElement>
   onGuideClick?: () => void // 添加指南按钮点击事件
+  onPrivacyClick?: () => void
+  onClearCacheClick?: () => void
 }
 
-export const Toolbar: React.FC<ToolbarProps> = ({ onOpenMap, fileInputRef, onGuideClick }) => {
+export const Toolbar: React.FC<ToolbarProps> = ({ onOpenMap, fileInputRef, onGuideClick, onPrivacyClick, onClearCacheClick }) => {
   const { t } = useLanguage()
 
   return (
@@ -37,6 +39,34 @@ export const Toolbar: React.FC<ToolbarProps> = ({ onOpenMap, fileInputRef, onGui
             aria-label={t.toolbar.guide}
           >
             <HelpCircle className="h-5 w-5 text-primary" />
+          </Button>
+        )}
+
+        {/* 隐私政策按钮 */}
+        {onPrivacyClick && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="rounded-full w-8 h-8 bg-background/80 backdrop-blur-sm hover:bg-background/90 active:scale-95 transition-all duration-75 shadow-md"
+            onClick={onPrivacyClick}
+            aria-label={t.toolbar.privacy}
+            title={t.toolbar.privacy}
+          >
+            <ShieldCheck className="h-5 w-5 text-primary" />
+          </Button>
+        )}
+
+        {/* 清理缓存按钮 */}
+        {onClearCacheClick && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="rounded-full w-8 h-8 bg-background/80 backdrop-blur-sm hover:bg-background/90 active:scale-95 transition-all duration-75 shadow-md"
+            onClick={onClearCacheClick}
+            aria-label={t.toolbar.clearCache}
+            title={t.toolbar.clearCache}
+          >
+            <Trash2 className="h-5 w-5 text-primary" />
           </Button>
         )}
 

@@ -8,6 +8,8 @@ import { useLanguage } from "@/contexts/language-context"
 interface ControlPanelProps {
   isSettingPosition: boolean
   settingsOpen: boolean
+  positionHint?: string
+  isConfirming?: boolean
   onZoomIn: () => void
   onZoomOut: () => void
   onLocate: () => void
@@ -19,6 +21,8 @@ interface ControlPanelProps {
 export const ControlPanel: React.FC<ControlPanelProps> = ({
   isSettingPosition,
   settingsOpen,
+  positionHint,
+  isConfirming = false,
   onZoomIn,
   onZoomOut,
   onLocate,
@@ -43,6 +47,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
             variant="default"
             size="icon"
             onClick={onConfirmPositionSetting}
+            disabled={isConfirming}
             className="active:shadow-lg active:scale-95 transition-all duration-75 shadow-none"
           >
             <Check className="h-5 w-5" />
@@ -50,7 +55,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
         </div>
         {/* 添加提示文本 */}
         <div className="mt-2 bg-background/80 backdrop-blur-sm p-2 rounded-lg text-center text-sm">
-          {t.controls.positionHint}
+          {positionHint || t.controls.positionHint}
         </div>
       </div>
     )

@@ -14,6 +14,8 @@ export interface Translations {
     openMap: string
     guide: string
     language: string
+    privacy: string
+    clearCache: string
   }
   
   // 控制面板
@@ -25,6 +27,9 @@ export interface Translations {
     cancel: string
     confirm: string
     positionHint: string
+    calibrationPoint1Hint: string
+    calibrationPoint2Hint: string
+    capturingLocation: string
   }
   
   // 罗盘相关
@@ -56,6 +61,9 @@ export interface Translations {
     scaleUnit: string
     actualScale: string
     positionHint: string
+    calibration: string
+    startCalibration: string
+    calibrationHint: string
     closeSettings: string
     scaleChanges: string
   }
@@ -118,7 +126,9 @@ export const zhTranslations: Translations = {
   toolbar: {
     openMap: "导入地图",
     guide: "使用指南",
-    language: "语言"
+    language: "语言",
+    privacy: "隐私政策",
+    clearCache: "清理缓存"
   },
   
   controls: {
@@ -128,7 +138,10 @@ export const zhTranslations: Translations = {
     settings: "设置",
     cancel: "取消",
     confirm: "确认",
-    positionHint: "将地图移动到您当前的位置，然后点击确认"
+    positionHint: "将地图移动到您当前的位置，然后点击确认",
+    calibrationPoint1Hint: "到达第一个真实地点后，将中心图钉对准地图上的对应位置，然后点击确认",
+    calibrationPoint2Hint: "移动到第二个真实地点后，将中心图钉对准地图上的对应位置，然后点击确认",
+    capturingLocation: "正在采集 GPS 位置..."
   },
   
   compass: {
@@ -158,6 +171,9 @@ export const zhTranslations: Translations = {
     scaleUnit: "米/厘米",
     actualScale: "当前实际比例尺",
     positionHint: "点击按钮后，拖动地图使图钉指向您的当前位置",
+    calibration: "两点校准",
+    startCalibration: "开始两点校准",
+    calibrationHint: "在两个真实地点分别采集地图点和 GPS，自动计算地图方向与比例尺。",
     closeSettings: "关闭设置",
     scaleChanges: "(随缩放变化)"
   },
@@ -217,7 +233,9 @@ export const enTranslations: Translations = {
   toolbar: {
     openMap: "Import Map",
     guide: "Guide",
-    language: "Language"
+    language: "Language",
+    privacy: "Privacy",
+    clearCache: "Clear Cache"
   },
   
   controls: {
@@ -227,7 +245,10 @@ export const enTranslations: Translations = {
     settings: "Settings",
     cancel: "Cancel",
     confirm: "Confirm",
-    positionHint: "Move the map to your current location, then click confirm"
+    positionHint: "Move the map to your current location, then click confirm",
+    calibrationPoint1Hint: "At the first real-world point, align the center pin with the matching place on the map, then confirm",
+    calibrationPoint2Hint: "Move to the second real-world point, align the center pin with the matching place on the map, then confirm",
+    capturingLocation: "Capturing GPS position..."
   },
   
   compass: {
@@ -257,6 +278,9 @@ export const enTranslations: Translations = {
     scaleUnit: "meters/cm",
     actualScale: "Current actual scale",
     positionHint: "After clicking the button, drag the map to point the pin to your current location",
+    calibration: "Two-point Calibration",
+    startCalibration: "Start Calibration",
+    calibrationHint: "Capture map and GPS points at two real-world locations to calculate orientation and scale automatically.",
     closeSettings: "Close Settings",
     scaleChanges: "(changes with zoom)"
   },

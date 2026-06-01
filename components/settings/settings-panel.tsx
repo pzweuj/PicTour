@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Compass, MapPin, Ruler, ChevronDown } from "lucide-react"
+import { Compass, Crosshair, MapPin, Ruler, ChevronDown } from "lucide-react"
 import { getOrientationName } from "@/lib/map-utils"
 import { useLanguage } from "@/contexts/language-context"
 
@@ -18,6 +18,7 @@ interface SettingsPanelProps {
   currentScale: number
   onOpenCompassSetting: () => void
   onSetPosition: () => void
+  onStartCalibration: () => void
   onScaleChange: (value: number[]) => void
   onScaleInputChange: (value: number) => void
   onClose: () => void
@@ -30,6 +31,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   currentScale,
   onOpenCompassSetting,
   onSetPosition,
+  onStartCalibration,
   onScaleChange,
   onScaleInputChange,
   onClose,
@@ -47,7 +49,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
       />
 
       {/* 设置面板 */}
-      <Card className="fixed bottom-20 right-4 w-[90%] max-w-xs z-30 bg-background/95 backdrop-blur-md shadow-lg">
+      <Card className="fixed bottom-20 right-4 w-[90%] max-w-xs max-h-[calc(100vh-7rem)] overflow-y-auto z-30 bg-background/95 backdrop-blur-md shadow-lg">
         <CardContent className="p-4 space-y-4">
         {/* 方向设置 */}
         <div className="space-y-2">
@@ -81,7 +83,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
               <Label htmlFor="scale">{t.settings.scaleLabel}</Label>
               <span className="text-sm font-medium">{scale} {t.settings.meters}</span>
             </div>
-            <Slider id="scale" min={10} max={500} step={10} value={[scale]} onValueChange={onScaleChange} />
+            <Slider id="scale" min={1} max={500} step={1} value={[scale]} onValueChange={onScaleChange} />
           </div>
           <div className="flex gap-2 items-center">
             <Input
@@ -110,6 +112,22 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             {t.settings.setPosition}
           </Button>
           <p className="text-sm text-muted-foreground">{t.settings.positionHint}</p>
+        </div>
+
+        {/* 两点校准 */}
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <Crosshair className="h-5 w-5 text-primary" />
+            <h4 className="font-medium">{t.settings.calibration}</h4>
+          </div>
+          <Button
+            variant="outline"
+            className="w-full active:shadow-lg active:scale-95 transition-all duration-75 shadow-none"
+            onClick={onStartCalibration}
+          >
+            {t.settings.startCalibration}
+          </Button>
+          <p className="text-sm text-muted-foreground">{t.settings.calibrationHint}</p>
         </div>
 
         {/* 关闭按钮 */}

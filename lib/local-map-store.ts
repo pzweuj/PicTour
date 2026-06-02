@@ -4,6 +4,7 @@ const DB_NAME = "pictour-local-data"
 const DB_VERSION = 1
 const STORE_NAME = "map-state"
 const STATE_KEY = "current"
+const MAX_SAVED_STATE_AGE_MS = 30 * 24 * 60 * 60 * 1000
 
 export interface SavedMapState {
   mapImage: string
@@ -15,6 +16,33 @@ export interface SavedMapState {
 }
 
 const canUseIndexedDB = () => typeof window !== "undefined" && "indexedDB" in window
+
+const isFinitePositiveNumber = (value: unknown) =>
+  typeof value === "number" && Number.isFinite(value) && value > 0
+
+const isFiniteNumber = (value: unknown) =>
+  typeof value === "number" && Number.isFinite(value)
+
+const isSavedMapState = (value: unknown): value is SavedMapState => {
+  if (!value || typeof value !== "object") return false
+
+  const state = value as SavedMapState
+  const isSupportedImage =
+    typeof state.mapImage === "string" &&
+    /^data:image\/(jpeg|png|webp);base64,/.test(state.mapImage)
+
+  return (
+    isSupportedImage &&
+    isFinitePositiveNumber(state.imageSize?.width) &&
+    isFinitePositiveNumber(state.imageSize?.height) &&
+    isFiniteNumber(state.orientation) &&
+    isFinitePositiveNumber(state.scale) &&
+    isFiniteNumber(state.referencePosition?.x) &&
+    isFiniteNumber(state.referencePosition?.y) &&
+    isFiniteNumber(state.updatedAt) &&
+    Date.now() - state.updatedAt <= MAX_SAVED_STATE_AGE_MS
+  )
+}
 
 function openDatabase(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -42,11 +70,19 @@ export async function loadSavedMapState(): Promise<SavedMapState | null> {
 
   const db = await openDatabase()
   return new Promise((resolve, reject) => {
-    const transaction = db.transaction(STORE_NAME, "readonly")
+    const transaction = db.transaction(STORE_NAME, "readwrite")
     const store = transaction.objectStore(STORE_NAME)
     const request = store.get(STATE_KEY)
 
-    request.onsuccess = () => resolve((request.result as SavedMapState | undefined) ?? null)
+    request.onsuccess = () => {
+      if (!isSavedMapState(request.result)) {
+        store.delete(STATE_KEY)
+        resolve(null)
+        return
+      }
+
+      resolve(request.result)
+    }
     request.onerror = () => reject(request.error)
     transaction.oncomplete = () => db.close()
   })

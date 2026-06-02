@@ -30,6 +30,8 @@ import { PrivacyModal } from "@/components/privacy/privacy-modal"
 type CalibrationStep = "idle" | "point1" | "point2"
 
 const MAX_MAP_IMAGE_SIZE_BYTES = 15 * 1024 * 1024
+const MAX_MAP_IMAGE_PIXELS = 24_000_000
+const MAX_MAP_IMAGE_DIMENSION = 8000
 const ALLOWED_MAP_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"])
 const MIN_MAP_SCALE = 1
 const MAX_MAP_SCALE = 500
@@ -41,6 +43,75 @@ const normalizeMapScale = (value: number) => {
   if (!Number.isFinite(value)) return MIN_MAP_SCALE
   return Math.min(Math.max(Math.round(value), MIN_MAP_SCALE), MAX_MAP_SCALE)
 }
+
+const logClientError = (message: string, error: unknown) => {
+  if (process.env.NODE_ENV !== "production") {
+    console.error(message, error)
+  }
+}
+
+const hasValidImageSignature = (bytes: Uint8Array, type: string) => {
+  if (type === "image/jpeg") {
+    return bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff
+  }
+
+  if (type === "image/png") {
+    return (
+      bytes[0] === 0x89 &&
+      bytes[1] === 0x50 &&
+      bytes[2] === 0x4e &&
+      bytes[3] === 0x47 &&
+      bytes[4] === 0x0d &&
+      bytes[5] === 0x0a &&
+      bytes[6] === 0x1a &&
+      bytes[7] === 0x0a
+    )
+  }
+
+  if (type === "image/webp") {
+    return (
+      bytes[0] === 0x52 &&
+      bytes[1] === 0x49 &&
+      bytes[2] === 0x46 &&
+      bytes[3] === 0x46 &&
+      bytes[8] === 0x57 &&
+      bytes[9] === 0x45 &&
+      bytes[10] === 0x42 &&
+      bytes[11] === 0x50
+    )
+  }
+
+  return false
+}
+
+const readImageDimensions = (src: string): Promise<ImageSize> =>
+  new Promise((resolve, reject) => {
+    const image = new window.Image()
+
+    image.onload = () => {
+      resolve({ width: image.naturalWidth, height: image.naturalHeight })
+    }
+    image.onerror = () => {
+      reject(new Error("Unable to decode image."))
+    }
+    image.src = src
+  })
+
+const readFileAsDataUrl = (file: File): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader()
+
+    reader.onload = (event) => {
+      if (event.target && typeof event.target.result === "string") {
+        resolve(event.target.result)
+        return
+      }
+
+      reject(new Error("FileReader returned a non-string result."))
+    }
+    reader.onerror = () => reject(reader.error ?? new Error("Unable to read file."))
+    reader.readAsDataURL(file)
+  })
 
 export default function Home() {
   const { t } = useLanguage()
@@ -56,8 +127,6 @@ export default function Home() {
   const [isSettingOrientation, setIsSettingOrientation] = useState(false) // 是否正在设置方向
   const [tempOrientation, setTempOrientation] = useState(0) // 临时方向
   const [settingsOpen, setSettingsOpen] = useState(false) // 是否打开设置面板
-  const [locationPermissionStatus, setLocationPermissionStatus] = useState<string>("未知") // 位置权限状态
-  const [locationError, setLocationError] = useState<string | null>(null) // 位置错误信息
   const [imageSize, setImageSize] = useState<ImageSize>(DEFAULT_IMAGE_SIZE) // 图片实际尺寸
   const [userPosition, setUserPosition] = useState<MapCoordinate>(DEFAULT_MAP_POSITION) // 用户在图片上的位置（像素）
   const [referencePosition, setReferencePosition] = useState<MapCoordinate>(DEFAULT_MAP_POSITION) // GPS校准参考点
@@ -69,6 +138,7 @@ export default function Home() {
   const [isPrivacyOpen, setIsPrivacyOpen] = useState(false) // 是否打开隐私政策
   const [hasAcceptedPrivacy, setHasAcceptedPrivacy] = useState(false) // 是否已确认隐私政策
   const [hasLoadedSavedState, setHasLoadedSavedState] = useState(false) // 是否已读取本地缓存
+  const [isTrackingLocation, setIsTrackingLocation] = useState(false) // 是否正在进行 GPS 定位
   const [locationConfidence, setLocationConfidence] = useState<LocationConfidenceState>({ status: "idle" })
 
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -103,7 +173,19 @@ export default function Home() {
   const acceptPrivacyPolicy = () => {
     localStorage.setItem("pictour-privacy-accepted", "true")
     setHasAcceptedPrivacy(true)
+    setIsTrackingLocation(true)
     setIsPrivacyOpen(false)
+  }
+
+  const requestPrivacyBeforeLocation = () => {
+    if (hasAcceptedPrivacy) return false
+
+    setIsPrivacyOpen(true)
+    toast({
+      title: "请先确认隐私政策",
+      description: "定位只会在本地用于地图换算，确认后才会请求浏览器定位权限。",
+    })
+    return true
   }
 
   const clearLocalCache = async () => {
@@ -116,7 +198,7 @@ export default function Home() {
         description: "本地保存的地图和校准数据已删除。",
       })
     } catch (error) {
-      console.error("清理缓存失败", error)
+      logClientError("清理缓存失败", error)
       toast({
         title: "清理失败",
         description: "无法删除本地缓存，请稍后重试。",
@@ -145,6 +227,9 @@ export default function Home() {
   }
 
   const startTwoPointCalibration = () => {
+    if (requestPrivacyBeforeLocation()) return
+
+    setIsTrackingLocation(true)
     calibrationCaptureIdRef.current += 1
     setCalibrationPoints([])
     setCalibrationStep("point1")
@@ -172,6 +257,7 @@ export default function Home() {
 
   const captureCalibrationPoint = async () => {
     if (calibrationStep === "idle" || isCapturingCalibrationPoint) return
+    if (requestPrivacyBeforeLocation()) return
 
     const mapCoord = getMapCenterCoordinate()
     if (!mapCoord) return
@@ -237,7 +323,7 @@ export default function Home() {
         description: `两点距离 ${Math.round(result.gpsDistance)} 米，方向 ${Math.round(result.orientation)}°，比例尺 ${calibratedScale} 米/厘米。`,
       })
     } catch (error) {
-      console.error("两点校准失败", error)
+      logClientError("两点校准失败", error)
       toast({
         title: "校准失败",
         description: "无法获取 GPS 位置，请确认已授予定位权限并在室外开阔区域重试。",
@@ -256,6 +342,8 @@ export default function Home() {
     setHasAcceptedPrivacy(accepted)
     if (!accepted) {
       setIsPrivacyOpen(true)
+    } else {
+      setIsTrackingLocation(true)
     }
   }, [])
 
@@ -279,7 +367,7 @@ export default function Home() {
         }
       })
       .catch((error) => {
-        console.error("读取本地地图缓存失败", error)
+        logClientError("读取本地地图缓存失败", error)
       })
       .finally(() => {
         if (!cancelled) setHasLoadedSavedState(true)
@@ -305,7 +393,7 @@ export default function Home() {
         referencePosition,
         updatedAt: Date.now(),
       }).catch((error) => {
-        console.error("保存本地地图缓存失败", error)
+        logClientError("保存本地地图缓存失败", error)
       })
     }, 400)
 
@@ -368,52 +456,76 @@ export default function Home() {
   }, [mapImage, updateReferencePosition])
 
   // 处理文件上传
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const input = e.currentTarget
     const file = input.files?.[0]
 
     if (!file) return
 
-    if (!ALLOWED_MAP_IMAGE_TYPES.has(file.type)) {
-      toast({
-        title: "无法导入地图",
-        description: "请上传 JPG、PNG 或 WebP 格式的图片。",
-        variant: "destructive",
-      })
-      input.value = ""
-      return
-    }
-
-    if (file.size > MAX_MAP_IMAGE_SIZE_BYTES) {
-      toast({
-        title: "无法导入地图",
-        description: "图片不能超过 15MB，请压缩后重试。",
-        variant: "destructive",
-      })
-      input.value = ""
-      return
-    }
-
-    const reader = new FileReader()
-    reader.onload = (event) => {
-      if (event.target && typeof event.target.result === "string") {
-        setMapImage(event.target.result)
-        // 重置缩放和位置
-        setZoom(1)
-        setMapOffset({ x: 0, y: 0 })
+    try {
+      if (!ALLOWED_MAP_IMAGE_TYPES.has(file.type)) {
+        toast({
+          title: "无法导入地图",
+          description: "请上传 JPG、PNG 或 WebP 格式的图片。",
+          variant: "destructive",
+        })
+        return
       }
-    }
-    reader.onerror = () => {
+
+      if (file.size > MAX_MAP_IMAGE_SIZE_BYTES) {
+        toast({
+          title: "无法导入地图",
+          description: "图片不能超过 15MB，请压缩后重试。",
+          variant: "destructive",
+        })
+        return
+      }
+
+      const signature = new Uint8Array(await file.slice(0, 16).arrayBuffer())
+      if (!hasValidImageSignature(signature, file.type)) {
+        toast({
+          title: "无法导入地图",
+          description: "图片内容与文件格式不一致，请换一张图片重试。",
+          variant: "destructive",
+        })
+        return
+      }
+
+      const objectUrl = URL.createObjectURL(file)
+      try {
+        const dimensions = await readImageDimensions(objectUrl)
+        const totalPixels = dimensions.width * dimensions.height
+
+        if (
+          dimensions.width > MAX_MAP_IMAGE_DIMENSION ||
+          dimensions.height > MAX_MAP_IMAGE_DIMENSION ||
+          totalPixels > MAX_MAP_IMAGE_PIXELS
+        ) {
+          toast({
+            title: "无法导入地图",
+            description: "图片尺寸过大，请压缩到 8000 像素以内或 2400 万像素以内后重试。",
+            variant: "destructive",
+          })
+          return
+        }
+      } finally {
+        URL.revokeObjectURL(objectUrl)
+      }
+
+      const dataUrl = await readFileAsDataUrl(file)
+      setMapImage(dataUrl)
+      setZoom(1)
+      setMapOffset({ x: 0, y: 0 })
+    } catch (error) {
+      logClientError("地图读取失败", error)
       toast({
         title: "地图读取失败",
         description: "无法读取该图片文件，请换一张图片重试。",
         variant: "destructive",
       })
-    }
-    reader.onloadend = () => {
+    } finally {
       input.value = ""
     }
-    reader.readAsDataURL(file)
   }
 
   // 处理缩放
@@ -431,79 +543,62 @@ export default function Home() {
     setIsSettingOrientation(false)
   }
 
-  // 在组件加载时检查位置权限并自动启动位置跟踪
+  // 只有确认隐私政策并启用定位后，才读取浏览器权限状态。
   useEffect(() => {
-    checkLocationPermission()
-
-    // 添加一个延迟的权限检查，确保在某些浏览器中能正确触发
-    const timer = setTimeout(() => {
-      if (locationPermissionStatus === "未知" || locationPermissionStatus === "prompt") {
-        console.log("尝试预热位置权限请求")
-        // 预热位置请求，可能会触发权限提示
-        navigator.geolocation.getCurrentPosition(
-          () => {
-            console.log("位置预热成功")
-            // 位置权限获取成功后自动开始跟踪
-            startLocationTracking()
-          },
-          (err) => console.log("位置预热失败", err.code),
-          { timeout: 3000, maximumAge: 0 },
-        )
-      } else if (locationPermissionStatus === "granted") {
-        // 如果已经有权限，自动开始跟踪
-        startLocationTracking()
-      }
-    }, 2000)
-
-    return () => clearTimeout(timer)
-  }, [locationPermissionStatus])
-
-  // 检查位置权限状态
-  const checkLocationPermission = async () => {
-    if (!navigator.geolocation) {
-      setLocationPermissionStatus("不支持")
+    if (!hasAcceptedPrivacy || !isTrackingLocation) {
+      setLocationConfidence({ status: "idle" })
       return
     }
 
-    if (navigator.permissions && navigator.permissions.query) {
+    if (!navigator.geolocation) {
+      setLocationConfidence({
+        status: "error",
+        message: "您的浏览器不支持地理位置功能。",
+      })
+      return
+    }
+
+    let cancelled = false
+    let permissionStatus: PermissionStatus | null = null
+    let handlePermissionChange: (() => void) | null = null
+
+    const syncLocationPermission = async () => {
+      if (!navigator.permissions || !navigator.permissions.query) {
+        return
+      }
+
       try {
         const result = await navigator.permissions.query({ name: "geolocation" as PermissionName })
-        setLocationPermissionStatus(result.state)
+        if (cancelled) return
 
-        // 监听权限变化
-        result.addEventListener("change", () => {
-          setLocationPermissionStatus(result.state)
-          // 如果权限变为授予，自动开始跟踪
-          if (result.state === "granted") {
-            startLocationTracking()
+        permissionStatus = result
+
+        handlePermissionChange = () => {
+          if (result.state === "denied") {
+            setIsTrackingLocation(false)
+            setLocationConfidence({
+              status: "error",
+              message: "用户拒绝了位置请求。",
+            })
           }
-        })
-      } catch (error) {
-        console.error("权限查询失败", error)
-        setLocationPermissionStatus("未知")
-      }
-    } else {
-      // 如果不支持permissions API，尝试获取位置来检查权限
-      navigator.geolocation.getCurrentPosition(
-        () => {
-          setLocationPermissionStatus("granted")
-          startLocationTracking()
-        },
-        () => setLocationPermissionStatus("denied"),
-        { timeout: 3000 },
-      )
-    }
-  }
+        }
 
-  // 开始位置跟踪
-  const startLocationTracking = () => {
-    if (navigator.geolocation) {
-      // 不显示toast，静默启动位置跟踪
-      console.log("开始位置跟踪")
-    } else {
-      console.error("设备不支持地理位置功能")
+        result.addEventListener("change", handlePermissionChange)
+      } catch (error) {
+        logClientError("权限查询失败", error)
+      }
     }
-  }
+
+    syncLocationPermission()
+
+    return () => {
+      cancelled = true
+
+      if (permissionStatus && handlePermissionChange) {
+        permissionStatus.removeEventListener("change", handlePermissionChange)
+      }
+    }
+  }, [hasAcceptedPrivacy, isTrackingLocation])
 
   // 将地图中心移动到用户位置
   const centerMapOnUser = () => {
@@ -529,8 +624,16 @@ export default function Home() {
     })
   }
 
-  // 处理定位按钮点击 - 现在只用于居中显示用户位置
+  // 处理定位按钮点击
   const handleLocateClick = () => {
+    if (requestPrivacyBeforeLocation()) return
+
+    if (!isTrackingLocation) {
+      setIsTrackingLocation(true)
+      setLocationConfidence({ status: "requesting", message: "正在请求定位权限" })
+      return
+    }
+
     centerMapOnUser()
   }
 
@@ -544,7 +647,9 @@ export default function Home() {
 
   // 处理位置错误
   const handleLocationError = (error: string) => {
-    setLocationError(error)
+    if (error.includes("拒绝") || error.toLowerCase().includes("denied")) {
+      setIsTrackingLocation(false)
+    }
     toast({
       title: "位置跟踪错误",
       description: error,
@@ -578,21 +683,13 @@ export default function Home() {
         zoom={zoom}
         mapOffset={mapOffset}
         isSettingPosition={isSettingPosition || isCalibrating}
-        isTracking={true} // 始终显示用户位置标记
+        isTracking={isTrackingLocation}
         heading={heading}
         userPosition={userPosition}
         imageSize={imageSize}
         scale={scale}
         onMapOffsetChange={setMapOffset}
         onZoomChange={setZoom}
-        onUserPositionSet={(position) => {
-          updateReferencePosition(position)
-          setIsSettingPosition(false)
-          toast({
-            title: "位置已设置",
-            description: "您的位置已在地图上更新",
-          })
-        }}
         mapContainerRef={mapContainerRef as React.RefObject<HTMLDivElement>}
       />
 
@@ -602,7 +699,6 @@ export default function Home() {
       {/* 顶部工具栏 */}
       <Toolbar
         onOpenMap={openMapFileSelect}
-        fileInputRef={fileInputRef as React.RefObject<HTMLInputElement>}
         onGuideClick={() => setIsGuideOpen(true)}
         onPrivacyClick={() => setIsPrivacyOpen(true)}
         onClearCacheClick={clearLocalCache}
@@ -619,10 +715,10 @@ export default function Home() {
       <GuideModal isOpen={isGuideOpen} onClose={() => setIsGuideOpen(false)} />
 
       {/* 隐私政策弹窗 */}
-      <PrivacyModal isOpen={isPrivacyOpen} onClose={acceptPrivacyPolicy} />
+      <PrivacyModal isOpen={isPrivacyOpen} onAccept={acceptPrivacyPolicy} />
 
       {/* 定位可信度 */}
-      <LocationConfidence state={locationConfidence} />
+      {hasAcceptedPrivacy && <LocationConfidence state={locationConfidence} />}
 
       {/* 两点校准状态 */}
       {isCalibrating && (
@@ -694,9 +790,9 @@ export default function Home() {
         />
       )}
 
-      {/* 位置跟踪器 - 始终保持活跃 */}
+      {/* 位置跟踪器 */}
       <LocationTracker
-        isTracking={true}
+        isTracking={isTrackingLocation}
         referencePosition={referencePosition}
         referenceVersion={referenceVersion}
         orientation={orientation}

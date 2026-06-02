@@ -9,13 +9,12 @@ import { useLanguage } from "@/contexts/language-context"
 
 interface ToolbarProps {
   onOpenMap: () => void
-  fileInputRef: React.RefObject<HTMLInputElement>
   onGuideClick?: () => void // 添加指南按钮点击事件
   onPrivacyClick?: () => void
   onClearCacheClick?: () => void
 }
 
-export const Toolbar: React.FC<ToolbarProps> = ({ onOpenMap, fileInputRef, onGuideClick, onPrivacyClick, onClearCacheClick }) => {
+export const Toolbar: React.FC<ToolbarProps> = ({ onOpenMap, onGuideClick, onPrivacyClick, onClearCacheClick }) => {
   const { t } = useLanguage()
 
   return (

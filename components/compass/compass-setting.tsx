@@ -35,10 +35,6 @@ export const CompassSetting: React.FC<CompassSettingProps> = ({ tempOrientation,
 
     if (!compassDialRef.current) return
 
-    const rect = compassDialRef.current.getBoundingClientRect()
-    const centerX = rect.left + rect.width / 2
-    const centerY = rect.top + rect.height / 2
-
     lastPositionRef.current = { x: e.clientX, y: e.clientY }
 
     document.addEventListener("mousemove", handleMouseMove)

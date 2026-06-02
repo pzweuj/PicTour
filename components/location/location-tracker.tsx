@@ -8,6 +8,12 @@ import { getCurrentPosition, positionToGPSCoordinate, gpsToMapCoordinate, calcul
 import type { MapCoordinate } from "@/lib/types"
 import type { LocationConfidenceState } from "./location-confidence"
 
+const logClientError = (message: string, error: unknown) => {
+  if (process.env.NODE_ENV !== "production") {
+    console.error(message, error)
+  }
+}
+
 interface LocationTrackerProps {
   isTracking: boolean
   referencePosition: MapCoordinate
@@ -57,7 +63,7 @@ export const LocationTracker: React.FC<LocationTrackerProps> = ({
     if (isTracking) {
       startTracking()
     } else {
-      stopTracking()
+      stopTracking(true)
     }
 
     return () => {
@@ -107,7 +113,7 @@ export const LocationTracker: React.FC<LocationTrackerProps> = ({
 
 
     } catch (error) {
-      console.error("初始化参考点失败:", error)
+      logClientError("初始化参考点失败:", error)
       const message = "无法获取您的位置，请确保已授予位置权限。"
       onStatusChange?.({ status: "error", message })
       onError(message)
@@ -140,7 +146,7 @@ export const LocationTracker: React.FC<LocationTrackerProps> = ({
           })
         },
         (error) => {
-          console.error("位置跟踪错误:", error)
+          logClientError("位置跟踪错误:", error)
           const message = `位置跟踪错误: ${getGeolocationErrorMessage(error)}`
           onStatusChange?.({ status: "error", message })
           onError(message)
@@ -152,7 +158,7 @@ export const LocationTracker: React.FC<LocationTrackerProps> = ({
         },
       )
     } catch (error) {
-      console.error("启动位置跟踪失败:", error)
+      logClientError("启动位置跟踪失败:", error)
       const message = "启动位置跟踪失败。"
       onStatusChange?.({ status: "error", message })
       onError(message)
@@ -160,10 +166,17 @@ export const LocationTracker: React.FC<LocationTrackerProps> = ({
   }
 
   // 停止位置跟踪
-  const stopTracking = () => {
+  const stopTracking = (resetState = false) => {
     if (watchIdRef.current !== null) {
       navigator.geolocation.clearWatch(watchIdRef.current)
       watchIdRef.current = null
+    }
+
+    if (resetState) {
+      referenceRequestIdRef.current += 1
+      setReferencePoint(null)
+      setCurrentGPS(null)
+      onStatusChange?.({ status: "idle" })
     }
   }
 
@@ -177,7 +190,6 @@ export const LocationTracker: React.FC<LocationTrackerProps> = ({
 
       // 如果距离很小（小于5米），认为用户没有移动，保持在参考点位置
       if (distance < 5) {
-        console.log("GPS变化很小，保持在参考点位置:", distance, "米")
         // 获取方向（如果可用）
         const heading = currentGPS.heading !== null && currentGPS.heading !== undefined ? currentGPS.heading : 0
         // 保持在参考点的地图坐标
@@ -193,15 +205,8 @@ export const LocationTracker: React.FC<LocationTrackerProps> = ({
 
       // 更新用户位置
       onLocationUpdate(newMapPosition, heading)
-
-      console.log("位置已更新:", {
-        gps: currentGPS,
-        map: newMapPosition,
-        heading,
-        distance: distance + "米",
-      })
     } catch (error) {
-      console.error("更新地图位置失败:", error)
+      logClientError("更新地图位置失败:", error)
     }
   }
 

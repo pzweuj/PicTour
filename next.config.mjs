@@ -1,4 +1,9 @@
 let userConfig = undefined
+const isProduction = process.env.NODE_ENV === 'production'
+const scriptSrc = isProduction
+  ? "script-src 'self' 'unsafe-inline'"
+  : "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
+const connectSrc = isProduction ? "connect-src 'self'" : "connect-src 'self' ws: wss:"
 
 const securityHeaders = [
   {
@@ -8,6 +13,10 @@ const securityHeaders = [
   {
     key: 'X-Content-Type-Options',
     value: 'nosniff',
+  },
+  {
+    key: 'Strict-Transport-Security',
+    value: 'max-age=63072000; includeSubDomains; preload',
   },
   {
     key: 'X-Frame-Options',
@@ -27,13 +36,14 @@ const securityHeaders = [
       "default-src 'self'",
       "base-uri 'self'",
       "object-src 'none'",
-      "frame-ancestors 'self'",
+      "frame-ancestors 'none'",
       "form-action 'self'",
       "img-src 'self' data: blob:",
       "font-src 'self' data:",
       "style-src 'self' 'unsafe-inline'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
-      "connect-src 'self' ws: wss:",
+      scriptSrc,
+      connectSrc,
+      "manifest-src 'self'",
     ].join('; '),
   },
 ]

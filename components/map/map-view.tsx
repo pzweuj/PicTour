@@ -19,7 +19,6 @@ interface MapViewProps {
   scale: number
   onMapOffsetChange: (offset: MapOffset) => void
   onZoomChange: (zoom: number) => void
-  onUserPositionSet: (position: MapCoordinate) => void
   mapContainerRef?: React.RefObject<HTMLDivElement>
 }
 
@@ -35,7 +34,6 @@ export const MapView: React.FC<MapViewProps> = ({
   scale,
   onMapOffsetChange,
   onZoomChange,
-  onUserPositionSet,
   mapContainerRef: externalMapContainerRef,
 }) => {
   const [isDraggingMap, setIsDraggingMap] = useState(false)

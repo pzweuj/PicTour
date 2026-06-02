@@ -14,15 +14,18 @@ import {
 
 interface PrivacyModalProps {
   isOpen: boolean
-  onClose: () => void
+  onAccept: () => void
 }
 
-export const PrivacyModal: React.FC<PrivacyModalProps> = ({ isOpen, onClose }) => {
+export const PrivacyModal: React.FC<PrivacyModalProps> = ({ isOpen, onAccept }) => {
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => {
-      if (!open) onClose()
-    }}>
-      <DialogContent className="sm:max-w-lg">
+    <Dialog open={isOpen}>
+      <DialogContent
+        className="sm:max-w-lg"
+        showCloseButton={false}
+        onEscapeKeyDown={(event) => event.preventDefault()}
+        onInteractOutside={(event) => event.preventDefault()}
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <ShieldCheck className="h-5 w-5 text-primary" />
@@ -60,7 +63,7 @@ export const PrivacyModal: React.FC<PrivacyModalProps> = ({ isOpen, onClose }) =
         </div>
 
         <DialogFooter>
-          <Button onClick={onClose}>我知道了</Button>
+          <Button onClick={onAccept}>我知道了</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
